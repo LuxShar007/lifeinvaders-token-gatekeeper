@@ -4,100 +4,116 @@ import time
 import tiktoken
 from openai import OpenAI
 
-# Initialize standard token encoder
+# Initialize token encoder
 encoder = tiktoken.get_encoding("cl100k_base")
 
-# Retrieve judging environment variables (Falling back to local endpoints for your testing)
+# Grab environment endpoints
 FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY", "mock_key")
 FIREWORKS_BASE_URL = os.getenv("FIREWORKS_BASE_URL", "https://api.fireworks.ai/inference/v1")
 LOCAL_OLLAMA_URL = os.getenv("LOCAL_OLLAMA_URL", "http://localhost:11434/v1")
 
-# Initialize SDK clients
 remote_client = OpenAI(api_key=FIREWORKS_API_KEY, base_url=FIREWORKS_BASE_URL)
 local_client = OpenAI(api_key="ollama", base_url=LOCAL_OLLAMA_URL)
 
-def assess_complexity(prompt: str) -> str:
+def calculate_complexity_score(prompt: str) -> float:
     """
-    LifeInvaders Gatekeeper Logic:
-    Calculates token count and scans for heavy logical keywords to decide tier routing.
+    LifeInvaders Speculative Gatekeeper Matrix:
+    Evaluates multi-signal criteria to return a complexity weight from 0.0 to 1.0.
     """
+    score = 0.0
     token_count = len(encoder.encode(prompt))
     
-    # Tier 1: Massive context threshold bypass
-    if token_count > 1500:
-        return "remote"
+    # Signal 1: Context Weight (Max penalty if > 1500 tokens)
+    if token_count > 1500: return 1.0
+    score += (token_count / 1500.0) * 0.3  # Up to 0.3 weight
+    
+    # Signal 2: Syntactic Code/Engineering Keywords
+    code_triggers = ["def ", "function", "runtime", "multithreading", "memory leak", "pointer", "compile"]
+    if any(trigger in prompt.lower() for trigger in code_triggers):
+        score += 0.4
         
-    # Tier 2: Heavy engineering/logic keyword filter
-    complex_keywords = ["debugger", "multithreading", "runtime", "optimize", "compilation"]
-    if any(word in prompt.lower() for word in complex_keywords):
-        return "remote"
+    # Signal 3: Advanced Cognitive Reasoning Hooks
+    reasoning_triggers = ["step-by-step", "analyze the root cause", "systemic", "mathematical proof"]
+    if any(trigger in prompt.lower() for trigger in reasoning_triggers):
+        score += 0.3
         
-    return "local"
+    return min(score, 1.0)
 
 def process_task(task: dict) -> dict:
     task_id = task.get("id", "unknown")
     prompt = task.get("prompt", "")
     
-    route = assess_complexity(prompt)
+    complexity = calculate_complexity_score(prompt)
     
+    # Leaderboard Threshold Strategy
+    if complexity > 0.70:
+        # High complexity -> Fast-track directly to premium cloud to protect accuracy
+        return call_remote_track(task_id, prompt, "high_complexity_bypass")
+        
+    # Low-to-Medium Complexity -> Run the Speculative Local Cascade
     try:
-        if route == "local":
-            # Zero-cost token tracking layer
-            response = local_client.chat.completions.create(
-                model="gemma2:2b",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.2
-            )
-            answer = response.choices[0].message.content
-            routed_via = "local_gemma2"
+        # Step 1: Query Local Gemma 4 (Costs 0 points on leaderboard)
+        response = local_client.chat.completions.create(
+            model="gemma4",
+            messages=[
+                {"role": "system", "content": "Return a strict JSON object containing an 'answer' string and a numeric 'confidence_score' between 1 and 5."},
+                {"role": "user", "content": prompt}
+            ],
+            response_format={"type": "json_object"}, # Keeps output clean
+            temperature=0.1
+        )
+        
+        # Step 2: Parse and assess model's self-evaluation confidence
+        result_data = json.loads(response.choices[0].message.content)
+        confidence = int(result_data.get("confidence_score", 0))
+        
+        if confidence >= 4:
+            return {
+                "id": task_id,
+                "answer": result_data.get("answer", ""),
+                "routed_via": "local_gemma4_confident"
+            }
         else:
-            # Paid Fireworks track
-            response = remote_client.chat.completions.create(
-                model="accounts/fireworks/models/gemma2-9b-it",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.3
-            )
-            answer = response.choices[0].message.content
-            routed_via = "remote_fireworks"
+            # Step 3: Low confidence fallback -> Cascade to Fireworks to protect accuracy
+            return call_remote_track(task_id, prompt, f"local_uncertainty_cascade (Conf: {confidence})")
             
     except Exception as e:
-        # Self-healing fallback option if local processing fails
-        answer = f"Fallback routing activated due to exception: {str(e)}"
-        routed_via = "fallback_bypass"
+        # Self-healing layer: If JSON formats break or local model fails, fallback to cloud immediately
+        return call_remote_track(task_id, prompt, f"error_fallback_cascade ({type(e).__name__})")
 
-    return {
-        "id": task_id,
-        "answer": answer,
-        "routed_via": routed_via
-    }
+def call_remote_track(task_id: str, prompt: str, reason: str) -> dict:
+    try:
+        response = remote_client.chat.completions.create(
+            model="accounts/fireworks/models/gemma2-9b-it",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3
+        )
+        return {
+            "id": task_id,
+            "answer": response.choices[0].message.content,
+            "routed_via": f"remote_fireworks_via_{reason}"
+        }
+    except Exception as e:
+        return {"id": task_id, "answer": f"Fatal System Exception: {str(e)}", "routed_via": "fatal_bypass"}
 
 def main():
     input_path = "/input/tasks.json"
     output_path = "/output/results.json"
     
-    # Fallback paths for your local Windows verification tests
     if not os.path.exists(input_path):
         os.makedirs("./mock_io/input", exist_ok=True)
         os.makedirs("./mock_io/output", exist_ok=True)
         input_path = "./mock_io/input/tasks.json"
         output_path = "./mock_io/output/results.json"
-        
-        # Write a dummy evaluation sample file if it doesn't exist yet
         if not os.path.exists(input_path):
-            sample_tasks = [
-                {"id": "1", "prompt": "What is the capital of France?"},
-                {"id": "2", "prompt": "Optimize this multi-threaded runtime compilation script process."}
-            ]
             with open(input_path, "w") as f:
-                json.dump(sample_tasks, f)
+                json.dump([{"id": "1", "prompt": "What is the capital of France?"}], f)
 
-    # Load tasks batch array
     with open(input_path, "r") as f:
         tasks = json.load(f)
         
     results = [process_task(task) for task in tasks]
     
-    # Write final answers back to the judging destination
     with open(output_path, "w") as f:
         json.dump(results, f, indent=4)
     print(f"Batch execution complete. Processed {len(results)} items successfully.")
