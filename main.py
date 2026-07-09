@@ -12,7 +12,7 @@ app = FastAPI(
 )
 
 # Fetch the active token string provisioned on Archit's branch from environment variables
-FIREWORKS_API_KEY = os.getenv("fw_2vfG1j8mYgx4UaNQJCUZDd")
+FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY")
 FIREWORKS_URL = "https://api.fireworks.ai/inference/v1/chat/completions"
 
 # Input validation schema matching the hackathon evaluation harness incoming payload
