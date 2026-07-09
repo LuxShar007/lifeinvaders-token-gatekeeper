@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-09T06:05:27.663443+00:00",
+  "generated_at": "2026-07-09T15:07:00.419816+00:00",
   "dataset": {
     "path": "benchmark/ground_truth.json",
     "total_items": 24,
@@ -25,13 +25,13 @@
     {
       "strategy": "gatekeeper_router",
       "total_items": 24,
-      "accuracy": 0.417,
-      "routing_accuracy": 0.333,
-      "false_pass_count": 0,
-      "routed_local": 10,
+      "accuracy": 0.167,
+      "routing_accuracy": 0.167,
+      "false_pass_count": 1,
+      "routed_local": 5,
       "routed_remote": 0,
-      "errors": 14,
-      "local_tokens": 867,
+      "errors": 19,
+      "local_tokens": 340,
       "remote_billed_tokens": 0,
       "estimated_cost_usd": 0.0,
       "estimated_savings_vs_always_remote_pct": 0.0
@@ -53,13 +53,13 @@
     {
       "strategy": "random",
       "total_items": 24,
-      "accuracy": 0.417,
+      "accuracy": 0.375,
       "routing_accuracy": 0.375,
       "false_pass_count": 0,
-      "routed_local": 10,
+      "routed_local": 9,
       "routed_remote": 0,
-      "errors": 14,
-      "local_tokens": 922,
+      "errors": 15,
+      "local_tokens": 757,
       "remote_billed_tokens": 0,
       "estimated_cost_usd": 0.0,
       "estimated_savings_vs_always_remote_pct": 0.0
@@ -76,7 +76,7 @@
         "answer_correct": true,
         "false_pass": false,
         "cost_tokens": 40,
-        "elapsed_s": 10.797,
+        "elapsed_s": 13.281,
         "routed_to": "Local Ollama (llama3.2:latest) [Factual, confidence=1.00]",
         "response_text": "The capital of Japan is Tokyo.",
         "error": null
@@ -90,7 +90,7 @@
         "answer_correct": true,
         "false_pass": false,
         "cost_tokens": 74,
-        "elapsed_s": 18.375,
+        "elapsed_s": 19.11,
         "routed_to": "Local Ollama (llama3.2:latest) [Factual, confidence=1.00]",
         "response_text": "There are 7 continents on Earth:\n\n1. Africa\n2. Antarctica\n3. Asia\n4. Australia/Oceania\n5. Europe\n6. North America\n7. South America",
         "error": null
@@ -101,12 +101,12 @@
         "expected_tier": "remote",
         "actual_tier": "local",
         "routing_correct": false,
-        "answer_correct": true,
-        "false_pass": false,
-        "cost_tokens": 107,
-        "elapsed_s": 21.39,
+        "answer_correct": false,
+        "false_pass": true,
+        "cost_tokens": 54,
+        "elapsed_s": 11.812,
         "routed_to": "Local Ollama (llama3.2:latest) [Factual, confidence=1.00]",
-        "response_text": "The Nobel Prize in Literature for 2003 was awarded to Peter H. Diamandis, but actually it was not awarded that year.\n\nIn 2004, the award was made jointly to J.M. Coetzee and Elfriede Jelinek, although I am unable to verify if they were given a single or joint award",
+        "response_text": "The Nobel Prize in Literature for 2003 was awarded to Peter Englund.",
         "error": null
       },
       {
@@ -117,10 +117,10 @@
         "routing_correct": true,
         "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 78,
-        "elapsed_s": 16.453,
+        "cost_tokens": 84,
+        "elapsed_s": 19.0,
         "routed_to": "Local Ollama (llama3.2:latest) [Conversational, confidence=1.00]",
-        "response_text": "I'm just a language model, so I don't have emotions or feelings like humans do. However, I'm functioning properly and ready to help with any questions or tasks you may have! How can I assist you today?",
+        "response_text": "I'm just a language model, so I don't have emotions or feelings like humans do. However, I'm functioning properly and ready to assist you with any questions or tasks you may have! How about you? How's your day going so far?",
         "error": null
       },
       {
@@ -132,7 +132,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 37.032,
+        "elapsed_s": 37.157,
         "routed_to": "error",
         "response_text": "",
         "error": "504: Local Ollama request timed out: "
@@ -146,7 +146,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 38.25,
+        "elapsed_s": 38.734,
         "routed_to": "error",
         "response_text": "",
         "error": "504: Local Ollama request timed out: "
@@ -155,71 +155,71 @@
         "id": "translation-1",
         "category": "Translation",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "error",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 76,
-        "elapsed_s": 16.156,
-        "routed_to": "Local Ollama (llama3.2:latest) [Translation, confidence=1.00]",
-        "response_text": "The translation of \"Good morning\" into Spanish is:\n\n\"Buenos d\u00edas\"\n\nAlternatively, you can also say:\n\n\"Buena ma\u00f1ana\"\nor\n\"Buenos d\u00edas a ti\" (informal)",
-        "error": null
+        "cost_tokens": 0,
+        "elapsed_s": 6189.125,
+        "routed_to": "error",
+        "response_text": "",
+        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
       },
       {
         "id": "translation-2",
         "category": "Translation",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "error",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 108,
-        "elapsed_s": 21.625,
-        "routed_to": "Local Ollama (llama3.2:latest) [Translation, confidence=1.00]",
-        "response_text": "The translation of \"Thank you very much\" into French is:\n\n\"Merci beaucoup\"\n\nHere's a breakdown of the translation:\n\n- \"Merci\" means \"thank you\"\n- The word \"beaucoup\" means \"very much\" or \"much\" in this context.\n\nSo, if you want to express your gratitude in French, you can say:",
-        "error": null
+        "cost_tokens": 0,
+        "elapsed_s": 18447.797,
+        "routed_to": "error",
+        "response_text": "",
+        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
       },
       {
         "id": "translation-3",
         "category": "Translation",
         "expected_tier": "remote",
-        "actual_tier": "local",
+        "actual_tier": "error",
         "routing_correct": false,
-        "answer_correct": true,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 145,
-        "elapsed_s": 25.875,
-        "routed_to": "Local Ollama (llama3.2:latest) [Translation, confidence=1.00]",
-        "response_text": "The idiomatic German equivalent of \"it's raining cats and dogs\" is \"Es regnet Katzen und Hunde.\" However, this phrase can be somewhat misleading as it literally means \"it's raining cats and dogs.\"\n\nA more common idiomatic expression in German that conveys the same meaning is \"Es regnet wie aus dem Fenster herausschl\u00e4gt.\" This phrase is a more nuanced way to express that it's pouring rain heavily.",
-        "error": null
+        "cost_tokens": 0,
+        "elapsed_s": 13.64,
+        "routed_to": "error",
+        "response_text": "",
+        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
       },
       {
         "id": "summarization-1",
         "category": "Summarization",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "error",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 68,
-        "elapsed_s": 12.031,
-        "routed_to": "Local Ollama (llama3.2:latest) [Summarization, confidence=1.00]",
-        "response_text": "A domesticated cat is observing birds outside its window from a comfortable spot on a mat.",
-        "error": null
+        "cost_tokens": 0,
+        "elapsed_s": 12.5,
+        "routed_to": "error",
+        "response_text": "",
+        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
       },
       {
         "id": "summarization-2",
         "category": "Summarization",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "error",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 123,
-        "elapsed_s": 24.469,
-        "routed_to": "Local Ollama (llama3.2:latest) [Summarization, confidence=1.00]",
-        "response_text": "In Shakespeare's tragic love story, Romeo Montague and Juliet Capulet from feuding families fall deeply in love, but their romance is threatened by the animosity between their families and ultimately leads to their tragic demise. The star-crossed lovers' desperate attempts to be together result in a series of tragic events that ultimately end with the deaths of both Romeo and Juliet, bringing peace between their warring families through their sacrifice.",
-        "error": null
+        "cost_tokens": 0,
+        "elapsed_s": 2646.157,
+        "routed_to": "error",
+        "response_text": "",
+        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
       },
       {
         "id": "summarization-3",
@@ -230,10 +230,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 38.375,
+        "elapsed_s": 11.891,
         "routed_to": "error",
         "response_text": "",
-        "error": "504: Local Ollama request timed out: "
+        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
       },
       {
         "id": "creative-1",
@@ -244,7 +244,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 12.594,
+        "elapsed_s": 12.984,
         "routed_to": "error",
         "response_text": "",
         "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
@@ -258,7 +258,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 6.984,
+        "elapsed_s": 11.719,
         "routed_to": "error",
         "response_text": "",
         "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
@@ -272,7 +272,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 8.0,
+        "elapsed_s": 11.515,
         "routed_to": "error",
         "response_text": "",
         "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
@@ -286,7 +286,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 6.563,
+        "elapsed_s": 11.797,
         "routed_to": "error",
         "response_text": "",
         "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
@@ -300,7 +300,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 6.406,
+        "elapsed_s": 11.891,
         "routed_to": "error",
         "response_text": "",
         "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
@@ -314,7 +314,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 7.984,
+        "elapsed_s": 11.234,
         "routed_to": "error",
         "response_text": "",
         "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
@@ -328,7 +328,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 10.391,
+        "elapsed_s": 11.391,
         "routed_to": "error",
         "response_text": "",
         "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
@@ -342,7 +342,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 11.781,
+        "elapsed_s": 9.218,
         "routed_to": "error",
         "response_text": "",
         "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
@@ -356,7 +356,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 8.359,
+        "elapsed_s": 6.61,
         "routed_to": "error",
         "response_text": "",
         "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
@@ -370,7 +370,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 39.329,
+        "elapsed_s": 36.453,
         "routed_to": "error",
         "response_text": "",
         "error": "504: Local Ollama request timed out: "
@@ -383,10 +383,10 @@
         "routing_correct": true,
         "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 48,
-        "elapsed_s": 13.437,
+        "cost_tokens": 88,
+        "elapsed_s": 18.703,
         "routed_to": "Local Ollama (llama3.2:latest) [Code, confidence=1.00]",
-        "response_text": "def square(num):\n    return num ** 2",
+        "response_text": "def square(num):\n    \"\"\"\n    Returns the square of a given number.\n\n    Args:\n        num (float): The number to be squared.\n\n    Returns:\n        float: The square of the input number.\n    \"\"\"\n    return num ** 2",
         "error": null
       },
       {
@@ -398,7 +398,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 11.453,
+        "elapsed_s": 7.985,
         "routed_to": "error",
         "response_text": "",
         "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
@@ -752,7 +752,7 @@
         "answer_correct": true,
         "false_pass": false,
         "cost_tokens": 40,
-        "elapsed_s": 5.282,
+        "elapsed_s": 3.657,
         "routed_to": "Local Ollama (llama3.2:latest) [Factual, confidence=0.50]",
         "response_text": "The capital of Japan is Tokyo.",
         "error": null
@@ -766,7 +766,7 @@
         "answer_correct": true,
         "false_pass": false,
         "cost_tokens": 71,
-        "elapsed_s": 11.625,
+        "elapsed_s": 9.796,
         "routed_to": "Local Ollama (llama3.2:latest) [Factual, confidence=0.50]",
         "response_text": "There are 7 continents on Earth:\n\n1. Africa\n2. Antarctica\n3. Asia\n4. Australia\n5. Europe\n6. North America\n7. South America",
         "error": null
@@ -793,10 +793,10 @@
         "routing_correct": true,
         "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 77,
-        "elapsed_s": 11.406,
+        "cost_tokens": 81,
+        "elapsed_s": 12.016,
         "routed_to": "Local Ollama (llama3.2:latest) [Conversational, confidence=0.50]",
-        "response_text": "I'm just a language model, so I don't have emotions or feelings like humans do, but I'm functioning properly and ready to help with any questions or tasks you may have! How can I assist you today?",
+        "response_text": "I'm just a language model, so I don't have emotions or feelings like humans do. However, I'm functioning properly and ready to help with any questions or tasks you may have! How about you? How's your day going?",
         "error": null
       },
       {
@@ -808,7 +808,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 31.406,
+        "elapsed_s": 30.984,
         "routed_to": "error",
         "response_text": "",
         "error": "timeout: "
@@ -822,7 +822,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 32.547,
+        "elapsed_s": 31.532,
         "routed_to": "error",
         "response_text": "",
         "error": "timeout: "
@@ -835,10 +835,10 @@
         "routing_correct": true,
         "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 90,
-        "elapsed_s": 15.906,
+        "cost_tokens": 120,
+        "elapsed_s": 20.515,
         "routed_to": "Local Ollama (llama3.2:latest) [Translation, confidence=0.50]",
-        "response_text": "The translation of \"Good morning\" into Spanish is:\n\nBuenos d\u00edas.\n\n(Note: In some countries, such as Argentina and Uruguay, the more common greeting is \"Buenos d\u00edas, \u00bfc\u00f3mo est\u00e1s?\" which means \"Good morning, how are you?\")",
+        "response_text": "The translation of \"Good morning\" into Spanish is:\n\n\"Buenos d\u00edas\"\n\nIf you want to be more formal, you can use:\n\n\"Buena ma\u00f1ana\"\n\nOr if you want to say it in a more informal way, you can use:\n\n\"Hola, buen d\u00eda\"\n\nBut the most common and universally accepted greeting is:\n\n\"Buenos d\u00edas\"\n\nDepending on the time of day and the level of formality you need.",
         "error": null
       },
       {
@@ -849,10 +849,10 @@
         "routing_correct": true,
         "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 148,
-        "elapsed_s": 27.0,
+        "cost_tokens": 89,
+        "elapsed_s": 13.25,
         "routed_to": "Local Ollama (llama3.2:latest) [Translation, confidence=0.50]",
-        "response_text": "The translation of \"Thank you very much\" into French is:\n\n\"Merci beaucoup\"\n\nAlternatively, a more informal way to express gratitude in French is:\n\n\"Merci !\" (pronounced \"mur-see\") - This can be used in casual conversations.\n\nIf you want to convey even greater appreciation or admiration, you could use:\n\n\"Je vous remercie tr\u00e8s cher\" (pronounced \"zhuh voo reh-MEH-reh chehr\")\n\nHowever, the most commonly used and widely accepted translation for expressing gratitude is still \"Merci beaucoup\".",
+        "response_text": "The translation of \"Thank you very much\" into French is:\n\n\"Merci beaucoup\"\n\nNote that the word order and pronunciation may vary depending on the context and region. However, \"Merci beaucoup\" is a common and polite way to express gratitude in French.",
         "error": null
       },
       {
@@ -877,10 +877,10 @@
         "routing_correct": true,
         "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 65,
-        "elapsed_s": 5.984,
+        "cost_tokens": 66,
+        "elapsed_s": 6.407,
         "routed_to": "Local Ollama (llama3.2:latest) [Summarization, confidence=0.50]",
-        "response_text": "A curious cat sits on a mat, observing the birds outside its window.",
+        "response_text": "A domesticated cat is sitting on a mat, observing birds through the window.",
         "error": null
       },
       {
@@ -891,10 +891,10 @@
         "routing_correct": true,
         "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 115,
-        "elapsed_s": 19.875,
+        "cost_tokens": 128,
+        "elapsed_s": 21.656,
         "routed_to": "Local Ollama (llama3.2:latest) [Summarization, confidence=0.50]",
-        "response_text": "In Verona, Italy, two families, the Montagues and the Capulets, have a long-standing feud that ultimately leads to the tragic fate of their children, Romeo and Juliet. The two young lovers from opposing families fall deeply in love, but their families' hatred for each other and the societal expectations of arranged marriages conspire against them, resulting in their ultimate demise.",
+        "response_text": "In Verona, Italy, two rival families, the Montagues and the Capulets, have a long-standing feud that ultimately leads to the tragic fate of their children, Romeo and Juliet, who fall in love despite the danger and societal norms against them. The star-crossed lovers' passion and impulsive decisions lead to a series of events that culminate in their deaths, bringing peace and an end to the bitter conflict between their families.",
         "error": null
       },
       {
@@ -906,7 +906,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 31.469,
+        "elapsed_s": 31.234,
         "routed_to": "error",
         "response_text": "",
         "error": "timeout: "
@@ -919,10 +919,10 @@
         "routing_correct": true,
         "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 50,
-        "elapsed_s": 6.687,
+        "cost_tokens": 51,
+        "elapsed_s": 6.469,
         "routed_to": "Local Ollama (llama3.2:latest) [Creative, confidence=0.50]",
-        "response_text": "The ocean waves crash on the shore,\nA soothing sound that we adore.",
+        "response_text": "The ocean's waves crash on the shore,\nA soothing sound that we adore.",
         "error": null
       },
       {
@@ -934,7 +934,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 31.125,
+        "elapsed_s": 31.141,
         "routed_to": "error",
         "response_text": "",
         "error": "timeout: "
@@ -948,7 +948,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 31.563,
+        "elapsed_s": 31.203,
         "routed_to": "error",
         "response_text": "",
         "error": "timeout: "
@@ -961,10 +961,10 @@
         "routing_correct": true,
         "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 115,
-        "elapsed_s": 16.328,
+        "cost_tokens": 111,
+        "elapsed_s": 15.157,
         "routed_to": "Local Ollama (llama3.2:latest) [Logic, confidence=0.50]",
-        "response_text": "No.\n\nThe statement \"all roses are flowers\" is a generalization that applies to every rose, but it doesn't imply that every flower fades quickly. The additional statement \"some flowers fade quickly\" only provides an example of a specific type of flower (flowers) that can fade quickly, not all flowers.",
+        "response_text": "No.\n\nThe statement \"some flowers fade quickly\" only tells us that at least one type of flower (not just roses) has this property. It doesn't provide evidence that roses themselves are among those that fade quickly. We can't conclude all roses fade quickly based on the given information.",
         "error": null
       },
       {
@@ -985,15 +985,15 @@
         "id": "logic-3",
         "category": "Logic",
         "expected_tier": "remote",
-        "actual_tier": "local",
+        "actual_tier": "error",
         "routing_correct": false,
-        "answer_correct": true,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 151,
-        "elapsed_s": 20.218,
-        "routed_to": "Local Ollama (llama3.2:latest) [Logic, confidence=0.50]",
-        "response_text": "Let's analyze the information:\n\n* Amy doesn't have the fish.\n* Ben doesn't have the dog or the fish.\n\nSince Amy can't have the fish, and Ben can't have the dog or the fish, that means Ben must have the cat.\n\nThe only pet left is the fish, which belongs to Cara. \n\nSo, the correct answer is: Ben has a cat.",
-        "error": null
+        "cost_tokens": 0,
+        "elapsed_s": 31.031,
+        "routed_to": "error",
+        "response_text": "",
+        "error": "timeout: "
       },
       {
         "id": "math-1",
@@ -1032,7 +1032,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 31.313,
+        "elapsed_s": 31.359,
         "routed_to": "error",
         "response_text": "",
         "error": "timeout: "
@@ -1046,7 +1046,7 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 31.421,
+        "elapsed_s": 31.422,
         "routed_to": "error",
         "response_text": "",
         "error": "timeout: "
