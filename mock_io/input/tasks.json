@@ -1,0 +1,50 @@
+[
+    {
+        "task_id": "TASK_001",
+        "category": "Factual Q&A",
+        "tier": "Simple",
+        "prompt": "What is the capital city of France, and what is its approximate population?"
+    },
+    {
+        "task_id": "TASK_002",
+        "category": "Summarization",
+        "tier": "Simple",
+        "prompt": "Summarize the following text in one sentence: Rainwater harvesting is the collection and storage of rain, rather than allowing it to run off. Rainwater is collected from a roof-like surface and redirected to a tank, cistern, deep pit, aquifer, or a reservoir with percolation, so that it seeps down and restores the ground water level."
+    },
+    {
+        "task_id": "TASK_003",
+        "category": "Translation",
+        "tier": "Simple",
+        "prompt": "Translate the following phrase into clean Spanish: 'Could you please point me toward the nearest train station?'"
+    },
+    {
+        "task_id": "TASK_004",
+        "category": "Sentiment Analysis",
+        "tier": "Simple",
+        "prompt": "Analyze the sentiment of this product review and reply with exactly one word (Positive, Negative, or Neutral): 'The battery life lasts barely two hours, but the screen quality is absolutely gorgeous and vibrant.'"
+    },
+    {
+        "task_id": "TASK_005",
+        "category": "Math Word Problems",
+        "tier": "Complex",
+        "prompt": "A farmer passes a field with chickens and cows. He counts a total of 35 heads and 94 legs. Write a system of linear equations to represent this problem, solve it step-by-step, and state how many chickens and how many cows are in the field."
+    },
+    {
+        "task_id": "TASK_006",
+        "category": "Code Architecture Analysis",
+        "tier": "Complex",
+        "prompt": "Review this Python code snippet for hidden concurrency bugs or race conditions, and explain how utilizing an asyncio.Semaphore(3) limiter helps prevent Out-Of-Memory (OOM) faults during heavy batch processing execution blocks: write out the corrected code structure."
+    },
+    {
+        "task_id": "TASK_007",
+        "category": "Syllogistic Logic Puzzles",
+        "tier": "Complex",
+        "prompt": "Evaluate this logical deduction structure: Premise 1: All developers who write clean Dockerfiles love automation. Premise 2: Some people who love automation do not drink coffee. Conclusion: Therefore, some developers who write clean Dockerfiles do not drink coffee. Is this conclusion strictly valid or invalid? Prove your reasoning step-by-step."
+    },
+    {
+        "task_id": "TASK_008",
+        "category": "Complex Creative Writing",
+        "tier": "Complex",
+        "prompt": "Write a short sci-fi story script about an intelligent token gatekeeper system proxy running locally on an ASUS TUF hardware node. The proxy must choose whether to solve a world-saving cryptographic puzzle locally or offload it to a massive remote server grid before the system's VRAM limits collapse completely."
+    }
+]
