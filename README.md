@@ -157,6 +157,9 @@ What it can show is that the two strategies made different decisions on the
 - **3 items per category is a smoke-test sample, not a statistically
   powered benchmark.** It's enough to catch gross miscalibration (as it
   did above) but not enough to produce a confidence interval on accuracy.
-- `requirements.txt` was missing `fastapi` and `uvicorn` even though
-  `main.py` imports both and the Dockerfile runs `uvicorn main:app` —
-  added here since the harness needs them to import `main.py` at all.
+- On the `main`-branch version of this fix, `requirements.txt` was missing
+  `fastapi` and `uvicorn` even though `main.py` imports both and the
+  Dockerfile runs `uvicorn main:app` — added there since the harness needs
+  them to import `main.py` at all. This branch's `requirements.txt` already
+  had both (with `>=` version specifiers instead of pins), so nothing
+  changed here.
