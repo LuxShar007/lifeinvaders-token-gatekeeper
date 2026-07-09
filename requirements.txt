@@ -1,14 +1,5 @@
-<<<<<<< HEAD
 openai==1.54.3
 httpx==0.27.2
 tiktoken==0.7.0
 pydantic==2.7.4
 requests==2.32.3
-=======
-fastapi>=0.110.0
-uvicorn>=0.28.0
-openai>=1.35.0
-tiktoken>=0.7.0
-pydantic>=2.9.0
-requests>=2.32.0
->>>>>>> a22485d104e599458a3405021e25154b4dbaf3ae
