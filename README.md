@@ -48,6 +48,11 @@ Summarization, Creative, Logic, Math, Code), each with:
 Of the 24 items, 17 are labeled `local` and 7 are labeled `remote`
 (deliberately imbalanced, since real traffic skews toward simple requests).
 
+**The 8-category list itself has not been confirmed with Archit.** It was
+inferred from an old comment referencing an "8-category test dataset" and
+picked in-session, not independently verified against what he actually
+uses. Treat it as provisional.
+
 ### `benchmark/validate.py` — the validation engine
 
 Runs each ground-truth item through `main.route_prompt`, grades the answer
@@ -74,11 +79,30 @@ billed (`FIREWORKS_COST_PER_1K_TOKENS`, default `$0.20/1k`, override via env
 var for your real pricing tier) — local Ollama tokens are free and are
 reported separately (`local_tokens`) rather than priced.
 
+## Security status
+
+`main.py` on this branch reads the key correctly:
+`FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY")`. A previous version
+had the raw key value hardcoded as the env var *name* instead
+(`os.getenv("fw_2vfG...")`), which both broke the lookup and committed the
+live key to source control. That's fixed and merged to `main` and
+`archit-infra`.
+
+**The raw key string is still recoverable from git history** on 4 commits
+(the original leak, the version of it carried into the FastAPI rewrite, and
+2 of the fix commits themselves — a diff necessarily contains the line it
+removes). A `git filter-repo` history scrub has been deliberately deferred
+until after the hackathon: it's a coordinated force-push across shared
+branches that isn't safe to do solo mid-sprint, and it's moot as an
+exploitability concern once the key is rotated. **Key rotation on the
+Fireworks side is the actual mitigation and is in progress separately from
+this repo.** `.env` is gitignored; `.env.example` ships a placeholder.
+
 ## Running it
 
 ```bash
 pip install -r requirements.txt
-ollama pull gemma4:e4b            # or set LOCAL_MODEL to whatever you have pulled
+ollama pull gemma4:e4b            # NOT pulled as of this writing -- see Known Limitations
 export FIREWORKS_API_KEY=...      # required for any remote-tier call to succeed
 python benchmark/harness.py       # writes benchmark/results.json
 ```
@@ -90,47 +114,68 @@ Env vars: `LOCAL_OLLAMA_URL` (default `http://localhost:11434`), `LOCAL_MODEL`
 
 ## Results — from an actual run
 
-Generated `2026-07-09T06:05:27Z`, committed at `benchmark/results.json`.
+Generated `2026-07-09T15:07:00Z`, committed at `benchmark/results.json`.
+This is the third and final harness run of the hackathon; the first two are
+in earlier commit history if you want to compare. **It still does not
+reflect production numbers**, for the same two reasons as before:
 
-**This run does not reflect production numbers** — two environment gaps
-distort it, and both are worth understanding before reading the table:
-
-1. **No `FIREWORKS_API_KEY` was configured.** Every remote-tier call — for
-   all three strategies — failed at the config check with a `500` error
-   instead of completing. `always_remote` is 100% remote by definition, so
-   it scored 0% and $0 across the board; it did not "lose" to the other
-   strategies, it simply couldn't run.
-2. **`LOCAL_MODEL` was overridden to `llama3.2:latest`** because
-   `gemma4:e4b` (the production default) wasn't pulled in this environment.
-
-Given that, this run demonstrates three things and nothing more: the
-pipeline runs end-to-end without crashing under either failure mode, the
-router's routing decisions are visibly different from random's (see below),
-and no false passes occurred in this particular sample.
+1. **No `FIREWORKS_API_KEY` was available.** Key rotation was in progress
+   on the Fireworks side at the time of this run, so every remote-tier call
+   — for all three strategies — failed at the config check with a `500`
+   before completing. `always_remote` is 100% remote by definition, so it
+   scored 0% and $0 across the board; it did not "lose," it simply
+   couldn't run.
+2. **`LOCAL_MODEL` was `llama3.2:latest`**, not the production default
+   `gemma4:e4b` — `gemma4:e4b` has not been pulled on the machine this was
+   run on (`ollama list` confirms only `llama3.2:latest` is present).
 
 | Strategy | Accuracy | Routing Accuracy | False Passes | Routed Local | Errors | Est. Cost |
 |---|---|---|---|---|---|---|
-| `gatekeeper_router` | 41.7% (10/24) | 33.3% (8/24) | 0 | 10 | 14 | $0.00 |
+| `gatekeeper_router` | 16.7% (4/24) | 16.7% (4/24) | 1 | 5 | 19 | $0.00 |
 | `always_remote` | 0.0% (0/24) | 0.0% (0/24) | 0 | 0 | 24 | $0.00 |
-| `random` (seed 42) | 41.7% (10/24) | 37.5% (9/24) | 0 | 10 | 14 | $0.00 |
+| `random` (seed 42) | 37.5% (9/24) | 37.5% (9/24) | 0 | 9 | 15 | $0.00 |
 
-Accuracy and cost are tied between `gatekeeper_router` and `random` in this
-run purely because neither could complete a remote call — **this run cannot
-demonstrate the router's cost or accuracy advantage over naive routing**.
-What it can show is that the two strategies made different decisions on the
-7 `remote`-labeled items:
+**`random` outscored `gatekeeper_router` on accuracy in this specific run.**
+That is not a claim the router is worse — it's what happens when 19 of 24
+gatekeeper items errored before producing an answer (mostly the missing
+Fireworks key, plus a few local Ollama timeouts under load), leaving only 5
+items that could possibly be graded correct, versus random getting luckier
+on which items happened to complete. With cost sitting at $0 for every
+strategy because no remote call ever billed, **this run cannot demonstrate
+the router's accuracy or cost advantage over naive baselines** — it only
+demonstrates that the pipeline doesn't crash under real failure conditions,
+and that one concrete false pass occurred and was correctly flagged:
 
-- `gatekeeper_router` correctly escalated `creative-3`, `logic-3`, `math-3`,
-  `code-3` (visible as `500` config errors rather than local answers — the
-  classifier decided remote, the environment just couldn't complete it) and
-  misrouted `factual-3` and `translation-3` to local (both got correct
-  answers anyway, so neither counted as a false pass; `summarization-3` also
-  went local and timed out before producing an answer).
-- `random` correctly escalated only `code-3` by chance and misrouted
-  `logic-3` to local (also got the right answer by luck).
+- `factual-3` ("Who won the Nobel Prize in Literature in 2003?", labeled
+  `remote` in ground truth) was routed local by the classifier.
+  `llama3.2:latest` answered "Peter Englund" — wrong; the actual 2003
+  laureate was J.M. Coetzee. This is exactly the failure mode false-pass
+  detection exists to catch, and it caught it.
+- Per-category false-pass breakdown: 1 in Factual, 0 in the other 7
+  categories, for all three strategies.
+- Two items (`translation-1`, `translation-2`) show `elapsed_s` of ~6,189s
+  and ~18,448s respectively — almost certainly the machine sleeping
+  mid-run, not real latency. Every other item completed in single/double-
+  digit seconds. Flagged here rather than silently excluded.
 
 ## Known limitations (found while producing this run, not yet fixed)
 
+- **`gemma4:e4b` (the production `LOCAL_MODEL` default) is not pulled on
+  any machine this was tested on.** Every live test and benchmark run in
+  this repo's history used `llama3.2:latest` as a stand-in via a
+  `LOCAL_MODEL` env override. Run `ollama pull gemma4:e4b` before
+  demoing, or accept that the demo is running a different model than the
+  code defaults to.
+- **No working `FIREWORKS_API_KEY` has been available to any benchmark run
+  so far.** All three runs in this repo's history show `$0.00` cost and
+  heavy error counts on the remote tier as a result. The accuracy and
+  cost-savings numbers in this README are not representative of real
+  performance until a run happens with a valid key.
+- **The 8-category list has not been confirmed with Archit** (see
+  `benchmark/ground_truth.json` section above).
+- **The raw leaked Fireworks key is still recoverable from git history**
+  on 4 commits (see Security status above); scrub deferred to
+  post-hackathon by design.
 - **Four of eight categories can mathematically never escalate to
   remote.** `Factual` (0.15), `Conversational` (0.15), `Translation`
   (0.25), and `Summarization` (0.35) all have `CATEGORY_COMPLEXITY` weights
