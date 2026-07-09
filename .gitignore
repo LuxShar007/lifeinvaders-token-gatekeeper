@@ -4,3 +4,19 @@ __pycache__/
 .venv/
 venv/
 mock_io/output/
+# Python bytecode caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local environment keys and variables
+.env
+*.local
+
+# Archit's Output validation data 
+# (Keep your tasks file, but ignore your generated runtime output results)
+mock_io/output/results.json
+
+# Docker system logs
+*.log
