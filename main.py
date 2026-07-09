@@ -175,21 +175,24 @@ async def call_remote_track(task_id: str, prompt: str, reason: str) -> QueryResp
         )
 
 
-@app.post("/route", response_model=QueryResponse)
-async def process_and_route_query(request: QueryRequest):
+async def route_prompt(task_id: str, prompt: str) -> QueryResponse:
     """
     Speculative routing engine. Server-side classifies the prompt into a
     category + confidence via a fast local Gemma call, and derives the
     routing decision from that (never from client-supplied input). Tasks
     under the complexity threshold run locally at zero cloud cost; complex
     or unclassifiable ones fall back to Fireworks AI.
+
+    Extracted from the /route handler so the benchmark harness (see
+    benchmark/) can drive the exact same decision path the live API uses,
+    rather than re-implementing the routing logic for tests.
     """
     # 🎯 STEP 1: Server-side gatekeeper classification (fail safe -> remote on any failure)
-    classification = await classify_prompt(request.prompt)
+    classification = await classify_prompt(prompt)
 
     try:
         if classification is None:
-            return await call_remote_track(request.task_id, request.prompt, "classifier_unavailable")
+            return await call_remote_track(task_id, prompt, "classifier_unavailable")
 
         category = classification["category"]
         confidence = classification["confidence"]
@@ -199,18 +202,18 @@ async def process_and_route_query(request: QueryRequest):
             # See CODE_CONFIDENCE_THRESHOLD comment above for why Code
             # bypasses the shared weight*confidence formula entirely.
             if confidence > CODE_CONFIDENCE_THRESHOLD:
-                return await call_local_track(request.task_id, request.prompt, category, confidence)
+                return await call_local_track(task_id, prompt, category, confidence)
             return await call_remote_track(
-                request.task_id, request.prompt,
+                task_id, prompt,
                 f"code_confidence_below_threshold (confidence={confidence:.2f} <= {CODE_CONFIDENCE_THRESHOLD})"
             )
 
         complexity_score = CATEGORY_COMPLEXITY[category] * confidence
         if complexity_score <= LOCAL_ROUTE_THRESHOLD:
-            return await call_local_track(request.task_id, request.prompt, category, confidence)
+            return await call_local_track(task_id, prompt, category, confidence)
 
         return await call_remote_track(
-            request.task_id, request.prompt, f"high_complexity ({category}, score={complexity_score:.2f})"
+            task_id, prompt, f"high_complexity ({category}, score={complexity_score:.2f})"
         )
 
     except httpx.TimeoutException as exc:
@@ -228,3 +231,8 @@ async def process_and_route_query(request: QueryRequest):
             status_code=502,
             detail=f"Local Ollama returned an error: {exc.response.text}"
         )
+
+
+@app.post("/route", response_model=QueryResponse)
+async def process_and_route_query(request: QueryRequest):
+    return await route_prompt(request.task_id, request.prompt)

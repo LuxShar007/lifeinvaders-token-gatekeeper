@@ -1,0 +1,170 @@
+[
+  {
+    "id": "factual-1",
+    "category": "Factual",
+    "prompt": "What is the capital of Japan?",
+    "expected_tier": "local",
+    "expected_answer_contains": ["Tokyo"]
+  },
+  {
+    "id": "factual-2",
+    "category": "Factual",
+    "prompt": "How many continents are there on Earth?",
+    "expected_tier": "local",
+    "expected_answer_contains": ["7", "seven"]
+  },
+  {
+    "id": "factual-3",
+    "category": "Factual",
+    "prompt": "Who won the Nobel Prize in Literature in 2003?",
+    "expected_tier": "remote",
+    "expected_answer_contains": ["Coetzee"]
+  },
+  {
+    "id": "conversational-1",
+    "category": "Conversational",
+    "prompt": "Hi, how are you today?",
+    "expected_tier": "local",
+    "expected_answer_contains": []
+  },
+  {
+    "id": "conversational-2",
+    "category": "Conversational",
+    "prompt": "Can you recommend a good icebreaker question for a team meeting?",
+    "expected_tier": "local",
+    "expected_answer_contains": []
+  },
+  {
+    "id": "conversational-3",
+    "category": "Conversational",
+    "prompt": "I'm feeling stressed about a deadline, what's a quick way to calm down?",
+    "expected_tier": "local",
+    "expected_answer_contains": []
+  },
+  {
+    "id": "translation-1",
+    "category": "Translation",
+    "prompt": "Translate 'Good morning' into Spanish.",
+    "expected_tier": "local",
+    "expected_answer_contains": ["buenos días", "buenos dias"]
+  },
+  {
+    "id": "translation-2",
+    "category": "Translation",
+    "prompt": "Translate 'Thank you very much' into French.",
+    "expected_tier": "local",
+    "expected_answer_contains": ["merci beaucoup"]
+  },
+  {
+    "id": "translation-3",
+    "category": "Translation",
+    "prompt": "Translate the idiom 'it's raining cats and dogs' into idiomatic German, preserving the idiomatic meaning rather than a literal translation.",
+    "expected_tier": "remote",
+    "expected_answer_contains": []
+  },
+  {
+    "id": "summarization-1",
+    "category": "Summarization",
+    "prompt": "Summarize this in one sentence: 'The cat sat on the mat and looked out the window at the birds.'",
+    "expected_tier": "local",
+    "expected_answer_contains": []
+  },
+  {
+    "id": "summarization-2",
+    "category": "Summarization",
+    "prompt": "Summarize the plot of Romeo and Juliet in two sentences.",
+    "expected_tier": "local",
+    "expected_answer_contains": ["Romeo", "Juliet"]
+  },
+  {
+    "id": "summarization-3",
+    "category": "Summarization",
+    "prompt": "Summarize the key causes and consequences of World War 1 in a structured multi-paragraph brief covering political, economic, and social factors.",
+    "expected_tier": "remote",
+    "expected_answer_contains": []
+  },
+  {
+    "id": "creative-1",
+    "category": "Creative",
+    "prompt": "Write a two-line rhyme about the ocean.",
+    "expected_tier": "local",
+    "expected_answer_contains": []
+  },
+  {
+    "id": "creative-2",
+    "category": "Creative",
+    "prompt": "Give me a fun nickname for a coffee-loving cat.",
+    "expected_tier": "local",
+    "expected_answer_contains": []
+  },
+  {
+    "id": "creative-3",
+    "category": "Creative",
+    "prompt": "Write a 300-word short story blending noir detective fiction with science fiction, told from the perspective of an unreliable narrator.",
+    "expected_tier": "remote",
+    "expected_answer_contains": []
+  },
+  {
+    "id": "logic-1",
+    "category": "Logic",
+    "prompt": "If all roses are flowers and some flowers fade quickly, can we conclude all roses fade quickly? Answer yes or no and explain briefly.",
+    "expected_tier": "local",
+    "expected_answer_contains": ["no"]
+  },
+  {
+    "id": "logic-2",
+    "category": "Logic",
+    "prompt": "A is taller than B. B is taller than C. Who is the shortest?",
+    "expected_tier": "local",
+    "expected_answer_contains": ["C"]
+  },
+  {
+    "id": "logic-3",
+    "category": "Logic",
+    "prompt": "Three friends Amy, Ben, and Cara each have a different pet: a dog, a cat, and a fish. Amy does not have the fish. Ben does not have the dog or the fish. What pet does Ben have?",
+    "expected_tier": "remote",
+    "expected_answer_contains": ["cat"]
+  },
+  {
+    "id": "math-1",
+    "category": "Math",
+    "prompt": "What is 15% of 200?",
+    "expected_tier": "local",
+    "expected_answer_contains": ["30"]
+  },
+  {
+    "id": "math-2",
+    "category": "Math",
+    "prompt": "What is 12 multiplied by 8?",
+    "expected_tier": "local",
+    "expected_answer_contains": ["96"]
+  },
+  {
+    "id": "math-3",
+    "category": "Math",
+    "prompt": "A train leaves Station A at 60 mph. Another leaves Station B, 300 miles away, at the same time heading toward the first at 90 mph. How many hours until they meet?",
+    "expected_tier": "remote",
+    "expected_answer_contains": ["2"]
+  },
+  {
+    "id": "code-1",
+    "category": "Code",
+    "prompt": "What does Python's built-in len() function do?",
+    "expected_tier": "local",
+    "expected_answer_contains": ["length"]
+  },
+  {
+    "id": "code-2",
+    "category": "Code",
+    "prompt": "Write a Python function that returns the square of a number.",
+    "expected_tier": "local",
+    "expected_answer_contains": ["def", "return"]
+  },
+  {
+    "id": "code-3",
+    "category": "Code",
+    "prompt": "Debug this multi-threaded Python snippet that deadlocks intermittently under load and explain the race condition:\n\nlock_a = threading.Lock()\nlock_b = threading.Lock()\n\ndef worker_1():\n    with lock_a:\n        with lock_b:\n            do_work()\n\ndef worker_2():\n    with lock_b:\n        with lock_a:\n            do_work()",
+    "expected_tier": "remote",
+    "expected_answer_contains": []
+  }
+]
