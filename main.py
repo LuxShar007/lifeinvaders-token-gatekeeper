@@ -1,5 +1,9 @@
 import os
 import json
+import time
+import tiktoken
+import requests
+from openai import OpenAI
 import httpx
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -12,6 +16,25 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Retrieve judging environment variables (Falling back to local endpoints for your testing)
+FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY", "mock_key")
+FIREWORKS_BASE_URL = os.getenv("FIREWORKS_BASE_URL", "https://api.fireworks.ai/inference/v1")
+LOCAL_OLLAMA_URL = os.getenv("LOCAL_OLLAMA_URL", "http://localhost:11434")
+LOCAL_MODEL = os.getenv("LOCAL_MODEL", "gemma4:e4b")
+
+# Initialize SDK clients
+remote_client = OpenAI(api_key=FIREWORKS_API_KEY, base_url=FIREWORKS_BASE_URL)
+
+
+def call_local_ollama(prompt: str, timeout: float = 30.0) -> str:
+    """Call the local Ollama /api/generate endpoint and return the response text."""
+    response = requests.post(
+        f"{LOCAL_OLLAMA_URL}/api/generate",
+        json={"model": LOCAL_MODEL, "prompt": prompt, "stream": False},
+        timeout=timeout,
+    )
+    response.raise_for_status()
+    return response.json()["response"]
 # Fetch the active token string provisioned on Archit's branch from environment variables
 FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY")
 FIREWORKS_URL = "https://api.fireworks.ai/inference/v1/chat/completions"
@@ -88,6 +111,28 @@ async def classify_prompt(prompt: str) -> dict | None:
     JSON) so the caller can fail safe to the remote track.
     """
     try:
+        if route == "local":
+            # Zero-cost token tracking layer
+            answer = call_local_ollama(prompt)
+            routed_via = "local_gemma4"
+        else:
+            # Paid Fireworks track
+            response = remote_client.chat.completions.create(
+                model="accounts/fireworks/models/gemma2-9b-it",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3
+            )
+            answer = response.choices[0].message.content
+            routed_via = "remote_fireworks"
+
+    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+        # Local Ollama isn't running or didn't respond in time
+        answer = f"Fallback routing activated: local Ollama unavailable ({str(e)})"
+        routed_via = "fallback_bypass"
+    except Exception as e:
+        # Self-healing fallback option if local processing fails
+        answer = f"Fallback routing activated due to exception: {str(e)}"
+        routed_via = "fallback_bypass"
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.post(
                 f"{LOCAL_OLLAMA_URL}/api/generate",
