@@ -33,6 +33,22 @@ CATEGORY_COMPLEXITY = {
 
 LOCAL_ROUTE_THRESHOLD = float(os.getenv("LOCAL_ROUTE_THRESHOLD", "0.4"))
 
+# Code gets a dedicated, stricter confidence gate instead of the shared
+# weight*confidence formula the other categories use. Rationale: code
+# correctness has near-zero tolerance for false passes, and the generic
+# formula is backwards for exactly the case that matters most -- Code's
+# weight (0.85) means a LOW-confidence classification shrinks
+# complexity_score below LOCAL_ROUTE_THRESHOLD and would send an
+# *uncertain* code prompt down the cheap local path, while a confidently
+# classified one would correctly escalate. That's the opposite of what we
+# want. So for Code specifically we only route local when the classifier
+# itself is highly confident (>0.8) that this is a well-identified code
+# task; anything less certain escalates to Fireworks. Deliberate design
+# choice, not an unfinished stub -- general categories keep the 0.4
+# threshold since a wrong guess there is far cheaper than shipping broken
+# code.
+CODE_CONFIDENCE_THRESHOLD = float(os.getenv("CODE_CONFIDENCE_THRESHOLD", "0.8"))
+
 CLASSIFIER_PROMPT_TEMPLATE = (
     "Classify the user prompt below into exactly one of these categories: "
     + ", ".join(CATEGORY_COMPLEXITY.keys()) + ".\n"
@@ -177,9 +193,19 @@ async def process_and_route_query(request: QueryRequest):
 
         category = classification["category"]
         confidence = classification["confidence"]
-        complexity_score = CATEGORY_COMPLEXITY[category] * confidence
 
-        # 🚨 STEP 2: Route off the server-computed score, not client input
+        # 🚨 STEP 2: Route off the server-computed classification, not client input.
+        if category == "Code":
+            # See CODE_CONFIDENCE_THRESHOLD comment above for why Code
+            # bypasses the shared weight*confidence formula entirely.
+            if confidence > CODE_CONFIDENCE_THRESHOLD:
+                return await call_local_track(request.task_id, request.prompt, category, confidence)
+            return await call_remote_track(
+                request.task_id, request.prompt,
+                f"code_confidence_below_threshold (confidence={confidence:.2f} <= {CODE_CONFIDENCE_THRESHOLD})"
+            )
+
+        complexity_score = CATEGORY_COMPLEXITY[category] * confidence
         if complexity_score <= LOCAL_ROUTE_THRESHOLD:
             return await call_local_track(request.task_id, request.prompt, category, confidence)
 
