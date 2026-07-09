@@ -2,6 +2,7 @@ import os
 import json
 import time
 import tiktoken
+import requests
 from openai import OpenAI
 
 # Initialize standard token encoder
@@ -10,11 +11,22 @@ encoder = tiktoken.get_encoding("cl100k_base")
 # Retrieve judging environment variables (Falling back to local endpoints for your testing)
 FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY", "mock_key")
 FIREWORKS_BASE_URL = os.getenv("FIREWORKS_BASE_URL", "https://api.fireworks.ai/inference/v1")
-LOCAL_OLLAMA_URL = os.getenv("LOCAL_OLLAMA_URL", "http://localhost:11434/v1")
+LOCAL_OLLAMA_URL = os.getenv("LOCAL_OLLAMA_URL", "http://localhost:11434")
+LOCAL_MODEL = os.getenv("LOCAL_MODEL", "gemma4:e4b")
 
 # Initialize SDK clients
 remote_client = OpenAI(api_key=FIREWORKS_API_KEY, base_url=FIREWORKS_BASE_URL)
-local_client = OpenAI(api_key="ollama", base_url=LOCAL_OLLAMA_URL)
+
+
+def call_local_ollama(prompt: str, timeout: float = 30.0) -> str:
+    """Call the local Ollama /api/generate endpoint and return the response text."""
+    response = requests.post(
+        f"{LOCAL_OLLAMA_URL}/api/generate",
+        json={"model": LOCAL_MODEL, "prompt": prompt, "stream": False},
+        timeout=timeout,
+    )
+    response.raise_for_status()
+    return response.json()["response"]
 
 def assess_complexity(prompt: str) -> str:
     """
@@ -43,13 +55,8 @@ def process_task(task: dict) -> dict:
     try:
         if route == "local":
             # Zero-cost token tracking layer
-            response = local_client.chat.completions.create(
-                model="gemma2:2b",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.2
-            )
-            answer = response.choices[0].message.content
-            routed_via = "local_gemma2"
+            answer = call_local_ollama(prompt)
+            routed_via = "local_gemma4"
         else:
             # Paid Fireworks track
             response = remote_client.chat.completions.create(
@@ -59,7 +66,11 @@ def process_task(task: dict) -> dict:
             )
             answer = response.choices[0].message.content
             routed_via = "remote_fireworks"
-            
+
+    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+        # Local Ollama isn't running or didn't respond in time
+        answer = f"Fallback routing activated: local Ollama unavailable ({str(e)})"
+        routed_via = "fallback_bypass"
     except Exception as e:
         # Self-healing fallback option if local processing fails
         answer = f"Fallback routing activated due to exception: {str(e)}"
