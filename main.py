@@ -14,6 +14,8 @@ app = FastAPI(
 # Fetch the active token string provisioned on Archit's branch from environment variables
 FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY")
 FIREWORKS_URL = "https://api.fireworks.ai/inference/v1/chat/completions"
+LOCAL_OLLAMA_URL = os.getenv("LOCAL_OLLAMA_URL", "http://localhost:11434")
+LOCAL_MODEL = os.getenv("LOCAL_MODEL", "gemma4:e4b")
 
 # Input validation schema matching the hackathon evaluation harness incoming payload
 class QueryRequest(BaseModel):
@@ -48,16 +50,37 @@ async def process_and_route_query(request: QueryRequest):
     # 🎯 STEP 1: Evaluate Heuristic Complexity Signal (Speculative Gatekeeping)
     # If the task is lightweight, handle it locally (zero cloud token fee)
     if request.complexity_score <= 0.4:
-        local_mock_reply = (
-            f"[Local Tier-1 Gemma 4] Successfully processed simple request '{request.task_id}'. "
-            "Optimized route maintained at 0 true cloud cost."
-        )
-        return QueryResponse(
-            task_id=request.task_id,
-            routed_to="Local Gemma 4 (Tier-1 Engine)",
-            cost_tokens=0,  # Absolute zero cost recorded for local evaluation metrics
-            response_text=local_mock_reply
-        )
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    f"{LOCAL_OLLAMA_URL}/api/generate",
+                    json={"model": LOCAL_MODEL, "prompt": request.prompt, "stream": False}
+                )
+                response.raise_for_status()
+                data = response.json()
+
+            return QueryResponse(
+                task_id=request.task_id,
+                routed_to=f"Local Ollama ({LOCAL_MODEL})",
+                cost_tokens=data.get("prompt_eval_count", 0) + data.get("eval_count", 0),
+                response_text=data.get("response", "")
+            )
+
+        except httpx.TimeoutException as exc:
+            raise HTTPException(
+                status_code=504,
+                detail=f"Local Ollama request timed out: {str(exc)}"
+            )
+        except httpx.RequestError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail=f"Could not reach local Ollama instance (is it running?): {str(exc)}"
+            )
+        except httpx.HTTPStatusError as exc:
+            raise HTTPException(
+                status_code=502,
+                detail=f"Local Ollama returned an error: {exc.response.text}"
+            )
 
     # 🚨 STEP 2: Complex Task Escalation (Cloud Fallback Loop)
     # If complexity is high, securely invoke the remote premium cluster
