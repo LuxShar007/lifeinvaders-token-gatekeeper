@@ -41,6 +41,51 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ============================================================================
+# DOCKER DETECTION & UTILITIES
+# ============================================================================
+
+def is_running_in_docker() -> bool:
+    """
+    Detect if the application is running inside a Docker container.
+    Checks for /.dockerenv file or 'docker' in cgroup paths.
+    """
+    # Check for /.dockerenv file (most reliable for modern Docker)
+    if Path("/.dockerenv").exists():
+        return True
+    
+    # Fallback: check cgroup for docker/container references
+    try:
+        with open("/proc/self/cgroup", "r") as f:
+            return "docker" in f.read() or "container" in f.read()
+    except (FileNotFoundError, OSError):
+        return False
+
+
+def get_ollama_url() -> str:
+    """
+    Determine the Ollama endpoint URL based on environment and execution context.
+    
+    Priority:
+    1. Explicit OLLAMA_BASE_URL or LOCAL_OLLAMA_URL environment variable
+    2. If in Docker: http://host.docker.internal:11434
+    3. Default: http://localhost:11434
+    """
+    # Check for explicit environment variable (highest priority)
+    if os.getenv("OLLAMA_BASE_URL"):
+        return os.getenv("OLLAMA_BASE_URL")
+    
+    if os.getenv("LOCAL_OLLAMA_URL"):
+        return os.getenv("LOCAL_OLLAMA_URL")
+    
+    # If running in Docker, use host.docker.internal to reach host machine
+    if is_running_in_docker():
+        return "http://host.docker.internal:11434"
+    
+    # Default for local development
+    return "http://localhost:11434"
+
+
+# ============================================================================
 # CONFIGURATION & ENVIRONMENT SETUP
 # ============================================================================
 
@@ -54,7 +99,7 @@ logger = logging.getLogger("LifeInvaders.Router")
 # Environment variables with sensible defaults
 FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY")
 FIREWORKS_BASE_URL = os.getenv("FIREWORKS_BASE_URL", "https://api.fireworks.ai/inference/v1")
-LOCAL_OLLAMA_URL = os.getenv("LOCAL_OLLAMA_URL", "http://localhost:11434")
+LOCAL_OLLAMA_URL = get_ollama_url()
 LOCAL_MODEL = os.getenv("LOCAL_MODEL", "gemma4:2b")
 REMOTE_MODEL = os.getenv("REMOTE_MODEL", "accounts/fireworks/models/gemma2-9b-it")
 
@@ -172,8 +217,19 @@ async def lifespan(app: FastAPI):
     """
     Application lifespan management.
     Ensures output directory exists on startup.
+    Logs environment configuration including Docker detection and Ollama endpoint.
     """
     logger.info("🚀 LifeInvaders Router starting up...")
+    
+    # Log environment detection
+    in_docker = is_running_in_docker()
+    if in_docker:
+        logger.info("🐳 Running inside Docker container - using host.docker.internal for Ollama")
+    else:
+        logger.info("💻 Running on host machine")
+    
+    logger.info(f"📍 Ollama endpoint: {LOCAL_OLLAMA_URL}")
+    
     METRICS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     yield
     logger.info("🛑 LifeInvaders Router shutting down...")
@@ -860,7 +916,15 @@ if __name__ == "__main__":
     import uvicorn
     
     logger.info("🚀 Starting LifeInvaders Token Router (Enterprise Edition)")
-    logger.info(f"📍 Local tier: {LOCAL_OLLAMA_URL}")
+    
+    # Log environment detection
+    in_docker = is_running_in_docker()
+    if in_docker:
+        logger.info("🐳 Running inside Docker container")
+    else:
+        logger.info("💻 Running on host machine")
+    
+    logger.info(f"📍 Local tier (Ollama): {LOCAL_OLLAMA_URL}")
     logger.info(f"📍 Remote tier: {FIREWORKS_BASE_URL}")
     logger.info(f"📊 Metrics output: {METRICS_OUTPUT_FILE}")
     

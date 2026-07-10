@@ -1,17 +1,17 @@
 """
-LifeInvaders Mock Evaluation Harness - Enterprise Batch Processing
-==================================================================
+LifeInvaders Mock Evaluation Harness - FastAPI Proxy-Routed Processing
+========================================================================
 
-Production-grade evaluation framework for batch processing tasks through
-the hybrid token router with comprehensive metrics collection and analysis.
+Evaluation framework for batch processing tasks through a centralized
+FastAPI proxy gateway that handles all routing decisions and model selection.
 
 Features:
 - Async batch processing with semaphore concurrency control
-- Full metrics collection: TTFT, throughput, cost tracking
-- Dynamic hot-swap fallback with detailed logging
+- All requests proxied through FastAPI gateway (no direct Ollama/Fireworks calls)
+- Full metrics collection: TTFT, throughput, tokens
 - Thread-safe JSON result aggregation
 - Performance analysis and reporting
-- Cost savings quantification and benchmarking
+- Unified request schema for proxy gateway
 """
 
 import os
@@ -52,18 +52,11 @@ load_dotenv()
 # CONFIGURATION & ENVIRONMENT SETUP
 # ============================================================================
 
-# Align with main infrastructure variables
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-FIREWORKS_BASE_URL = os.getenv("FIREWORKS_BASE_URL", "https://api.fireworks.ai/inference/v1")
-FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY")
-
-# Model configuration
-LOCAL_MODEL = os.getenv("LOCAL_MODEL", "gemma4:2b")
-REMOTE_MODEL = os.getenv("REMOTE_MODEL", "accounts/fireworks/models/gemma2-9b-it")
+# Proxy gateway endpoint (all traffic routed here)
+PROXY_ENDPOINT = os.getenv("PROXY_ENDPOINT", "http://localhost:8000/route")
 
 # Timeout configuration
-LOCAL_TIMEOUT = float(os.getenv("LOCAL_TIMEOUT", "30.0"))
-REMOTE_TIMEOUT = float(os.getenv("REMOTE_TIMEOUT", "10.0"))
+PROXY_TIMEOUT = float(os.getenv("PROXY_TIMEOUT", "30.0"))
 
 # Concurrency control - prevent hardware crash
 MAX_CONCURRENT_TASKS = int(os.getenv("MAX_CONCURRENT_TASKS", "3"))
@@ -72,32 +65,20 @@ MAX_CONCURRENT_TASKS = int(os.getenv("MAX_CONCURRENT_TASKS", "3"))
 INPUT_FILE = os.getenv("INPUT_FILE", "mock_io/input/tasks.json")
 OUTPUT_FILE = os.getenv("OUTPUT_FILE", "mock_io/output/results.json")
 
-# Cost configuration (USD per 1K tokens)
-FIREWORKS_INPUT_COST_PER_1K = 0.0002
-FIREWORKS_OUTPUT_COST_PER_1K = 0.0004
-LOCAL_COST_PER_1K = 0.0
-
-# Complexity thresholds (mirror main.py)
-LOCAL_ROUTE_THRESHOLD = float(os.getenv("LOCAL_ROUTE_THRESHOLD", "0.4"))
-CODE_CONFIDENCE_THRESHOLD = float(os.getenv("CODE_CONFIDENCE_THRESHOLD", "0.8"))
-
-CATEGORY_COMPLEXITY = {
-    "Factual": 0.15,
-    "Conversational": 0.15,
-    "Translation": 0.25,
-    "Summarization": 0.35,
-    "Creative": 0.45,
-    "Logic": 0.65,
-    "Math": 0.75,
-    "Code": 0.85,
+# Complexity score calibration (used for proxy routing decisions)
+DEFAULT_COMPLEXITY_SCORE = 0.5
+COMPLEXITY_BY_CATEGORY = {
+    "code": 0.85,
+    "math": 0.75,
+    "logic": 0.65,
+    "reasoning": 0.65,
+    "creative": 0.45,
+    "summarization": 0.35,
+    "translation": 0.25,
+    "conversational": 0.15,
+    "factual": 0.15,
+    "general": 0.35,
 }
-
-CLASSIFIER_PROMPT_TEMPLATE = (
-    "Classify the user prompt below into exactly one of these categories: "
-    + ", ".join(CATEGORY_COMPLEXITY.keys()) + ".\n"
-    'Respond with ONLY a JSON object: {{"category": "<one category>", "confidence": <float 0.0-1.0>}}\n'
-    "No other text.\n\nPrompt: {prompt}"
-)
 
 # Logging configuration
 logging.basicConfig(
@@ -137,149 +118,72 @@ def count_tokens(text: str) -> int:
 
 
 # ============================================================================
-# COST CALCULATION UTILITIES
+# PROXY GATEWAY UTILITIES
 # ============================================================================
 
-def calculate_cost_usd(input_tokens: int, output_tokens: int, tier: str = "remote") -> float:
+def get_complexity_score(task: Dict[str, Any]) -> float:
     """
-    Calculate estimated cost in USD based on token counts and tier.
+    Determine complexity score for a task based on its category.
     
     Args:
-        input_tokens: Number of input tokens
-        output_tokens: Number of output tokens
-        tier: "local" or "remote" (Fireworks)
+        task: Task dict with optional 'category' key
     
     Returns:
-        Estimated cost in USD
+        Complexity score (0.0-1.0)
     """
-    if tier == "local":
-        return 0.0
+    if "complexity" in task:
+        return float(task.get("complexity", DEFAULT_COMPLEXITY_SCORE))
     
-    # Fireworks pricing approximation
-    return (input_tokens * FIREWORKS_INPUT_COST_PER_1K / 1000) + \
-           (output_tokens * FIREWORKS_OUTPUT_COST_PER_1K / 1000)
+    category = str(task.get("category", "general")).lower()
+    return COMPLEXITY_BY_CATEGORY.get(category, DEFAULT_COMPLEXITY_SCORE)
 
 
 # ============================================================================
-# CORE ROUTING LOGIC - MIRRORS main.py FOR CONSISTENCY
+# PROXY GATEWAY CALL
 # ============================================================================
 
-async def classify_prompt(prompt: str) -> Optional[Dict[str, Any]]:
+async def call_proxy_gateway(task: Dict[str, Any]) -> tuple[Optional[Dict[str, Any]], float]:
     """
-    Classify prompt using local Ollama.
-    Returns dict with category and confidence, or None on failure.
-    """
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            classifier_prompt = CLASSIFIER_PROMPT_TEMPLATE.format(prompt=prompt)
-            
-            response = await client.post(
-                f"{OLLAMA_BASE_URL}/api/generate",
-                json={
-                    "model": LOCAL_MODEL,
-                    "prompt": classifier_prompt,
-                    "format": "json",
-                    "stream": False,
-                    "options": {"temperature": 0},
-                },
-            )
-            response.raise_for_status()
-            raw_response = response.json().get("response", "")
-            
-            parsed = json.loads(raw_response)
-            category = parsed.get("category", "")
-            confidence = float(parsed.get("confidence", 0.0))
-            
-            if category not in CATEGORY_COMPLEXITY:
-                return None
-            if not (0.0 <= confidence <= 1.0):
-                return None
-            
-            logger.debug(f"✅ Classification: {category} (confidence={confidence:.2f})")
-            return {"category": category, "confidence": confidence}
+    Send task payload to FastAPI proxy gateway and get response.
     
-    except Exception as e:
-        logger.warning(f"⚠️ Classification failed: {e}")
-        return None
-
-
-async def call_local_ollama(task_id: str, prompt: str) -> tuple[Optional[str], int, float]:
-    """
-    Execute prompt on local Ollama tier.
-    Returns (response_text, output_tokens, elapsed_ms) or (None, 0, 0) on failure.
-    """
-    try:
-        start_time = time.time()
-        
-        async with httpx.AsyncClient(timeout=LOCAL_TIMEOUT) as client:
-            response = await client.post(
-                f"{OLLAMA_BASE_URL}/api/generate",
-                json={
-                    "model": LOCAL_MODEL,
-                    "prompt": prompt,
-                    "stream": False,
-                },
-            )
-            response.raise_for_status()
-            data = response.json()
-        
-        elapsed_ms = (time.time() - start_time) * 1000
-        response_text = data.get("response", "")
-        output_tokens = data.get("eval_count", 0)
-        
-        logger.debug(f"✅ Local Ollama SUCCESS [task={task_id}, elapsed={elapsed_ms:.2f}ms]")
-        return response_text, output_tokens, elapsed_ms
+    Args:
+        task: Task dict with id, prompt, and optional category
     
-    except Exception as e:
-        logger.debug(f"❌ Local Ollama FAILED [task={task_id}]: {e}")
-        return None, 0, 0
-
-
-async def call_remote_fireworks(task_id: str, prompt: str) -> tuple[Optional[str], int, int, float]:
+    Returns:
+        Tuple of (response_dict or None, elapsed_ms)
+        Response dict contains: response_text, input_tokens, output_tokens, routed_via
     """
-    Execute prompt on remote Fireworks tier.
-    Returns (response_text, input_tokens, output_tokens, elapsed_ms) or (None, 0, 0, 0) on failure.
-    """
-    if not FIREWORKS_API_KEY or FIREWORKS_API_KEY == "mock_key":
-        logger.warning(f"❌ Fireworks API key not configured")
-        return None, 0, 0, 0
+    task_id = task.get("id", task.get("task_id", "unknown"))
+    prompt = task.get("prompt", "")
+    complexity_score = get_complexity_score(task)
+    
+    # Build request payload per schema
+    payload = {
+        "task_id": task_id,
+        "prompt": prompt,
+        "complexity_score": complexity_score
+    }
     
     try:
         start_time = time.time()
         
-        headers = {
-            "Authorization": f"Bearer {FIREWORKS_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        
-        payload = {
-            "model": REMOTE_MODEL,
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 150,
-            "temperature": 0.2
-        }
-        
-        async with httpx.AsyncClient(timeout=REMOTE_TIMEOUT) as client:
+        async with httpx.AsyncClient(timeout=PROXY_TIMEOUT) as client:
             response = await client.post(
-                f"{FIREWORKS_BASE_URL}/chat/completions",
+                PROXY_ENDPOINT,
                 json=payload,
-                headers=headers
             )
             response.raise_for_status()
             data = response.json()
         
         elapsed_ms = (time.time() - start_time) * 1000
-        response_text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-        usage = data.get("usage", {})
-        input_tokens = usage.get("prompt_tokens", 0)
-        output_tokens = usage.get("completion_tokens", 0)
         
-        logger.debug(f"✅ Fireworks SUCCESS [task={task_id}, elapsed={elapsed_ms:.2f}ms]")
-        return response_text, input_tokens, output_tokens, elapsed_ms
+        logger.debug(f"✅ Proxy gateway SUCCESS [task={task_id}, elapsed={elapsed_ms:.2f}ms]")
+        return data, elapsed_ms
     
     except Exception as e:
-        logger.debug(f"❌ Fireworks FAILED [task={task_id}]: {e}")
-        return None, 0, 0, 0
+        elapsed_ms = (time.time() - start_time) * 1000
+        logger.debug(f"❌ Proxy gateway FAILED [task={task_id}]: {e}")
+        return None, elapsed_ms
 
 
 # ============================================================================
@@ -288,148 +192,118 @@ async def call_remote_fireworks(task_id: str, prompt: str) -> tuple[Optional[str
 
 async def evaluate_single_task(task: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Process a single task through the hybrid router with full metrics collection.
+    Process a single task through the FastAPI proxy gateway.
     
     Args:
-        task: Task dict with keys: id, prompt, category
+        task: Task dict with keys: id (or task_id), prompt, category
     
     Returns:
-        Result dict with routing decision, response, and comprehensive metrics
+        Result dict with response, routing decision, and metrics
     """
     async with CONCURRENCY_LIMITER:
         start_time = time.time()
-        task_id = task.get("id", "unknown")
+        task_id = task.get("id", task.get("task_id", "unknown"))
         prompt = task.get("prompt", "")
-        ground_truth_category = task.get("category", "Unknown")
+        category = task.get("category", "Unknown")
+        complexity_score = get_complexity_score(task)
         
-        logger.info(f"📨 Processing task {task_id}")
+        logger.info(f"📨 Processing task {task_id} [complexity={complexity_score:.2f}]")
         
         # Initialize result payload
         input_tokens = count_tokens(prompt)
         result = {
             "task_id": task_id,
             "timestamp": datetime.utcnow().isoformat() + "Z",
-            "ground_truth_category": ground_truth_category,
+            "category": category,
             "prompt": prompt,
+            "complexity_score": complexity_score,
             "input_tokens": input_tokens,
             "output_tokens": 0,
-            "active_route": "unknown",
-            "routed_via": "unknown",
             "status": "unknown",
             "response_text": "",
+            "routed_via": "unknown",
             "processing_time_ms": 0.0,
             "ttft_ms": 0.0,
             "tokens_per_second": 0.0,
-            "estimated_cost_usd": 0.0,
-            "estimated_cost_saved_usd": 0.0,
-            "fallback_activated": False,
         }
         
         try:
-            # Step 1: Classify prompt
-            classification = await classify_prompt(prompt)
+            # Call proxy gateway with task payload
+            gateway_response, ttft_ms = await call_proxy_gateway(task)
             
-            # Step 2: Determine routing
-            use_local = False
-            category = "Unknown"
-            confidence = 0.0
-            complexity_score = 0.0
-            
-            if classification:
-                category = classification["category"]
-                confidence = classification["confidence"]
-                
-                if category == "Code":
-                    use_local = confidence > CODE_CONFIDENCE_THRESHOLD
-                else:
-                    complexity_score = CATEGORY_COMPLEXITY[category] * confidence
-                    use_local = complexity_score <= LOCAL_ROUTE_THRESHOLD
-            
-            result["classified_category"] = category
-            result["confidence_score"] = confidence
-            result["complexity_score"] = complexity_score
-            
-            logger.debug(f"  Classification: {category}, Confidence: {confidence:.2f}, Use Local: {use_local}")
-            
-            # Step 3: Execute on primary route
-            response_text = ""
-            output_tokens = 0
-            ttft_ms = 0.0
-            
-            if use_local:
-                response_text, output_tokens, ttft_ms = await call_local_ollama(task_id, prompt)
-                
-                if response_text:
-                    result["active_route"] = f"Local Ollama ({LOCAL_MODEL})"
-                    result["routed_via"] = "local_primary"
-                    result["status"] = "success"
-                else:
-                    # Fallback to remote
-                    logger.info(f"🔄 FALLBACK: Local failed for task {task_id}, trying remote...")
-                    response_text, input_tokens, output_tokens, ttft_ms = await call_remote_fireworks(task_id, prompt)
-                    
-                    if response_text:
-                        result["active_route"] = f"Remote Fireworks ({REMOTE_MODEL}) [Fallback]"
-                        result["routed_via"] = "cloud_fallback"
-                        result["status"] = "fallback"
-                        result["fallback_activated"] = True
-                    else:
-                        result["status"] = "failure"
-                        response_text = "Service unavailable"
-            else:
-                response_text, input_tokens, output_tokens, ttft_ms = await call_remote_fireworks(task_id, prompt)
-                
-                if response_text:
-                    result["active_route"] = f"Remote Fireworks ({REMOTE_MODEL})"
-                    result["routed_via"] = "cloud_primary"
-                    result["status"] = "success"
-                else:
-                    # Fallback to local
-                    logger.info(f"🔄 FALLBACK: Remote failed for task {task_id}, trying local...")
-                    response_text, output_tokens, ttft_ms = await call_local_ollama(task_id, prompt)
-                    
-                    if response_text:
-                        result["active_route"] = f"Local Ollama ({LOCAL_MODEL}) [Fallback]"
-                        result["routed_via"] = "local_fallback"
-                        result["status"] = "fallback"
-                        result["fallback_activated"] = True
-                    else:
-                        result["status"] = "failure"
-                        response_text = "Service unavailable"
-            
-            # Calculate metrics
             processing_time_ms = (time.time() - start_time) * 1000
-            tokens_per_second = (output_tokens / (processing_time_ms / 1000)) if processing_time_ms > 0 else 0.0
             
-            # Cost calculation
-            if "cloud" in result["routed_via"]:
-                estimated_cost = calculate_cost_usd(input_tokens, output_tokens, tier="remote")
-                cost_saved = 0.0
+            if gateway_response:
+                # Extract response data from proxy with flexible key mapping
+                response_text = gateway_response.get("response_text", gateway_response.get("response", ""))
+                
+                # Extract routing information - try multiple key names, convert empty strings to "unknown"
+                routed_via = (
+                    gateway_response.get("routed_via") or
+                    gateway_response.get("routed_to") or
+                    gateway_response.get("active_route") or
+                    gateway_response.get("route") or
+                    "unknown"
+                )
+                
+                # Normalize empty strings to "unknown"
+                if not routed_via or routed_via.strip() == "":
+                    routed_via = "unknown"
+                
+                # Extract token counts from various possible keys
+                metrics = gateway_response.get("metrics", {})
+                
+                # Try to get input tokens from multiple sources
+                input_tokens = (
+                    metrics.get("input_tokens") or
+                    gateway_response.get("input_tokens") or
+                    input_tokens  # fallback to local count
+                )
+                
+                # Try to get output tokens - proxy returns cost_tokens
+                output_tokens = (
+                    metrics.get("output_tokens") or
+                    gateway_response.get("output_tokens") or
+                    gateway_response.get("cost_tokens") or
+                    0
+                )
+                
+                # Get performance metrics from response
+                processing_time_ms = gateway_response.get("processing_time_ms", processing_time_ms)
+                ttft_ms = gateway_response.get("ttft_ms", ttft_ms)
+                tokens_per_second = gateway_response.get("tokens_per_second", 0.0)
+                
+                # Fallback: calculate throughput if not provided
+                if tokens_per_second == 0.0 and output_tokens > 0 and processing_time_ms > 0:
+                    tokens_per_second = (output_tokens / (processing_time_ms / 1000))
+                
+                # Update result with gateway response
+                result.update({
+                    "status": "success",
+                    "response_text": response_text[:200] + "..." if len(response_text) > 200 else response_text,
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
+                    "routed_via": routed_via,
+                    "processing_time_ms": round(processing_time_ms, 2),
+                    "ttft_ms": round(ttft_ms, 2),
+                    "tokens_per_second": round(tokens_per_second, 2),
+                })
+                
+                logger.info(
+                    f"✅ Task {task_id} complete [route={routed_via}, tokens_out={output_tokens}, status=success]"
+                )
             else:
-                estimated_cost = calculate_cost_usd(input_tokens, output_tokens, tier="local")
-                cost_saved = calculate_cost_usd(input_tokens, output_tokens, tier="remote")
-            
-            # Update result
-            result.update({
-                "output_tokens": output_tokens,
-                "response_text": response_text[:200] + "..." if len(response_text) > 200 else response_text,
-                "processing_time_ms": round(processing_time_ms, 2),
-                "ttft_ms": round(ttft_ms, 2),
-                "tokens_per_second": round(tokens_per_second, 2),
-                "estimated_cost_usd": round(estimated_cost, 6),
-                "estimated_cost_saved_usd": round(cost_saved, 6),
-            })
-            
-            logger.info(
-                f"✅ Task {task_id} complete [route={result['routed_via']}, "
-                f"status={result['status']}, cost_saved=${cost_saved:.6f}]"
-            )
+                result["status"] = "failure"
+                result["response_text"] = "Proxy gateway unavailable"
+                result["processing_time_ms"] = round(processing_time_ms, 2)
+                result["ttft_ms"] = round(ttft_ms, 2)
+                logger.error(f"❌ Task {task_id} failed: proxy gateway returned no response")
         
         except Exception as e:
             logger.error(f"❌ Task {task_id} failed with exception: {e}")
             result["status"] = "error"
             result["response_text"] = f"Error: {str(e)}"
-            result["processing_time_ms"] = (time.time() - start_time) * 1000
+            result["processing_time_ms"] = round((time.time() - start_time) * 1000, 2)
         
         return result
 
@@ -440,12 +314,13 @@ async def evaluate_single_task(task: Dict[str, Any]) -> Dict[str, Any]:
 
 async def run_evaluation():
     """
-    Main evaluation harness - loads tasks, processes them, and generates report.
+    Main evaluation harness - loads tasks, processes them through proxy, and generates report.
     """
-    logger.info("🚀 Starting LifeInvaders Mock Evaluation")
+    logger.info("🚀 Starting LifeInvaders Mock Evaluation (Proxy-routed)")
     logger.info(f"📂 Input file: {INPUT_FILE}")
     logger.info(f"📂 Output file: {OUTPUT_FILE}")
-    logger.info(f"⚙️ Configuration: Local={LOCAL_TIMEOUT}s, Remote={REMOTE_TIMEOUT}s, Concurrency={MAX_CONCURRENT_TASKS}")
+    logger.info(f"🔗 Proxy endpoint: {PROXY_ENDPOINT}")
+    logger.info(f"⚙️ Configuration: Proxy timeout={PROXY_TIMEOUT}s, Concurrency={MAX_CONCURRENT_TASKS}")
     
     # Load input tasks
     if not os.path.exists(INPUT_FILE):
@@ -458,12 +333,12 @@ async def run_evaluation():
     logger.info(f"📋 Loaded {len(tasks)} tasks from dataset")
     
     # Process all tasks concurrently
-    logger.info("⏳ Running batch evaluation...")
+    logger.info("⏳ Running batch evaluation through proxy gateway...")
     evaluation_coroutines = [evaluate_single_task(task) for task in tasks]
     results = await asyncio.gather(*evaluation_coroutines, return_exceptions=True)
     
     # Filter out any exceptions
-    completed_results = [r for r in results if not isinstance(r, Exception)]
+    completed_results: List[Dict[str, Any]] = [r for r in results if not isinstance(r, Exception)]
     failed_results = [r for r in results if isinstance(r, Exception)]
     
     if failed_results:
@@ -482,7 +357,7 @@ async def run_evaluation():
 
 def generate_performance_report(results: List[Dict[str, Any]]):
     """
-    Generate comprehensive performance analysis and cost report.
+    Generate comprehensive performance analysis from proxy gateway responses.
     """
     if not results:
         logger.warning("No results to analyze")
@@ -491,41 +366,63 @@ def generate_performance_report(results: List[Dict[str, Any]]):
     # Aggregate statistics
     total_tasks = len(results)
     successful_tasks = sum(1 for r in results if r.get("status") == "success")
-    fallback_tasks = sum(1 for r in results if r.get("fallback_activated"))
-    failed_tasks = sum(1 for r in results if r.get("status") == "failure")
+    failed_tasks = sum(1 for r in results if r.get("status") in ("failure", "error"))
     
-    local_route_count = sum(1 for r in results if "local" in r.get("routed_via", "").lower())
-    remote_route_count = sum(1 for r in results if "cloud" in r.get("routed_via", "").lower())
+    # Routing breakdown
+    routing_counts = {}
+    for r in results:
+        route = r.get("routed_via", "unknown")
+        routing_counts[route] = routing_counts.get(route, 0) + 1
     
+    # Token statistics
     total_input_tokens = sum(r.get("input_tokens", 0) for r in results)
     total_output_tokens = sum(r.get("output_tokens", 0) for r in results)
-    total_cost = sum(r.get("estimated_cost_usd", 0) for r in results)
-    total_saved = sum(r.get("estimated_cost_saved_usd", 0) for r in results)
     
-    avg_processing_time = sum(r.get("processing_time_ms", 0) for r in results) / total_tasks if total_tasks > 0 else 0
-    avg_ttft = sum(r.get("ttft_ms", 0) for r in results) / total_tasks if total_tasks > 0 else 0
-    avg_throughput = sum(r.get("tokens_per_second", 0) for r in results) / total_tasks if total_tasks > 0 else 0
+    # Routing breakdown with Ollama/Fireworks detection
+    routing_counts = {}
+    ollama_count = 0
+    fireworks_count = 0
+    for r in results:
+        route = r.get("routed_via", "unknown")
+        routing_counts[route] = routing_counts.get(route, 0) + 1
+        
+        # Count Ollama vs Fireworks
+        if route and ("ollama" in route.lower() or "local" in route.lower()):
+            ollama_count += 1
+        elif route and ("fireworks" in route.lower() or "cloud" in route.lower() or "remote" in route.lower()):
+            fireworks_count += 1
+    
+    # Performance metrics
+    successful_results = [r for r in results if r.get("status") == "success"]
+    avg_processing_time = sum(r.get("processing_time_ms", 0) for r in successful_results) / len(successful_results) if successful_results else 0
+    avg_ttft = sum(r.get("ttft_ms", 0) for r in successful_results) / len(successful_results) if successful_results else 0
+    avg_throughput = sum(r.get("tokens_per_second", 0) for r in successful_results) / len(successful_results) if successful_results else 0
     
     # Print report
     print("\n" + "="*70)
-    print("📊 HYBRID ROUTER BATCH EVALUATION REPORT")
+    print("📊 PROXY GATEWAY BATCH EVALUATION REPORT")
     print("="*70)
     print(f"\n📈 TASK STATISTICS:")
     print(f"  Total Tasks: {total_tasks}")
     print(f"  Successful: {successful_tasks} ({100*successful_tasks//total_tasks if total_tasks > 0 else 0}%)")
-    print(f"  Fallback Activations: {fallback_tasks}")
-    print(f"  Failures: {failed_tasks}")
+    print(f"  Failed: {failed_tasks} ({100*failed_tasks//total_tasks if total_tasks > 0 else 0}%)")
     
     print(f"\n🛣️  ROUTING BREAKDOWN:")
-    print(f"  Local (Cost-Saving) Routes: {local_route_count} ({100*local_route_count//total_tasks if total_tasks > 0 else 0}%)")
-    print(f"  Remote (Premium) Routes: {remote_route_count} ({100*remote_route_count//total_tasks if total_tasks > 0 else 0}%)")
+    print(f"  Ollama (Local): {ollama_count} ({100*ollama_count//total_tasks if total_tasks > 0 else 0}%)")
+    print(f"  Fireworks (Cloud): {fireworks_count} ({100*fireworks_count//total_tasks if total_tasks > 0 else 0}%)")
+    print(f"\n  Detailed Routes:")
+    for route, count in sorted(routing_counts.items()):
+        pct = 100 * count // total_tasks if total_tasks > 0 else 0
+        print(f"    {route}: {count} ({pct}%)")
     
-    print(f"\n💰 COST ANALYSIS:")
+    print(f"\n📊 TOKEN STATISTICS:")
     print(f"  Total Input Tokens: {total_input_tokens:,}")
     print(f"  Total Output Tokens: {total_output_tokens:,}")
-    print(f"  Total Estimated Cost: ${total_cost:.4f}")
-    print(f"  Total Cost Saved (via local routing): ${total_saved:.4f}")
-    print(f"  Savings Rate: {100*total_saved/(total_cost+total_saved) if (total_cost+total_saved) > 0 else 0:.1f}%")
+    if total_tasks > 0:
+        avg_input = total_input_tokens // total_tasks
+        avg_output = total_output_tokens // total_tasks
+        print(f"  Avg Input Tokens/Task: {avg_input}")
+        print(f"  Avg Output Tokens/Task: {avg_output}")
     
     print(f"\n⚡ PERFORMANCE METRICS:")
     print(f"  Avg Processing Time: {avg_processing_time:.2f}ms")
