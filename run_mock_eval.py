@@ -32,10 +32,20 @@ except ImportError:
     TIKTOKEN_AVAILABLE = False
 
 try:
+    # pyrefly: ignore [missing-import]
     from transformers import AutoTokenizer
     TOKENIZER = AutoTokenizer.from_pretrained("google/gemma-4-9b-it")
 except Exception:
     TOKENIZER = None
+
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
+from dotenv import load_dotenv
+
+# Load local environment configurations from .env
+load_dotenv()
 
 
 # ============================================================================
@@ -45,7 +55,7 @@ except Exception:
 # Align with main infrastructure variables
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 FIREWORKS_BASE_URL = os.getenv("FIREWORKS_BASE_URL", "https://api.fireworks.ai/inference/v1")
-FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY", "mock_key")
+FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY", "fw_2vfG1j8mYgx4UaNQJCUZDd")
 
 # Model configuration
 LOCAL_MODEL = os.getenv("LOCAL_MODEL", "gemma4:2b")

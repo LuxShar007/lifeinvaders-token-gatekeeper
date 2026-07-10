@@ -339,7 +339,7 @@ Output Tokens: 150
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `FIREWORKS_API_KEY` | mock_key | API key for Fireworks (required for cloud tier) |
+| `FIREWORKS_API_KEY` | fw_2vfG1j8mYgx4UaNQJCUZDd | API key for Fireworks (required for cloud tier) |
 | `LOCAL_OLLAMA_URL` | http://localhost:11434 | Local Ollama endpoint |
 | `FIREWORKS_BASE_URL` | https://api.fireworks.ai/inference/v1 | Fireworks API endpoint |
 | `LOCAL_MODEL` | gemma4:2b | Model for local tier |

@@ -35,6 +35,10 @@ from openai import OpenAI, AsyncOpenAI
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from dotenv import load_dotenv
+
+# Load local environment configurations from .env
+load_dotenv()
 
 # ============================================================================
 # CONFIGURATION & ENVIRONMENT SETUP
@@ -48,7 +52,7 @@ logging.basicConfig(
 logger = logging.getLogger("LifeInvaders.Router")
 
 # Environment variables with sensible defaults
-FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY", "mock_key")
+FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY", "fw_2vfG1j8mYgx4UaNQJCUZDd")
 FIREWORKS_BASE_URL = os.getenv("FIREWORKS_BASE_URL", "https://api.fireworks.ai/inference/v1")
 LOCAL_OLLAMA_URL = os.getenv("LOCAL_OLLAMA_URL", "http://localhost:11434")
 LOCAL_MODEL = os.getenv("LOCAL_MODEL", "gemma4:2b")
@@ -785,6 +789,67 @@ async def debug_fireworks_connection():
             return {"status": "connected", "count": len(response.json().get("data", []))}
     except Exception as e:
         return {"status": "disconnected", "error": str(e)}
+
+
+# ============================================================================
+# BACKWARD COMPATIBILITY ALIASES FOR BENCHMARK SUITE
+# ============================================================================
+
+async def route_prompt(task_id: str, prompt: str) -> QueryResponse:
+    """Legacy alias for route_with_fallback used by benchmarks."""
+    response, _ = await route_with_fallback(task_id, prompt, routing_decision="auto")
+    return response
+
+
+async def call_local_track(
+    task_id: str,
+    prompt: str,
+    category: str = "Unknown",
+    confidence: float = 0.0
+) -> QueryResponse:
+    """Legacy alias for call_local_ollama used by benchmarks."""
+    response_text, output_tokens, ttft_ms = await call_local_ollama(task_id, prompt, category, confidence)
+    if response_text is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Local Ollama call failed"
+        )
+    return QueryResponse(
+        task_id=task_id,
+        routed_to=f"Local Ollama ({LOCAL_MODEL})",
+        routed_via="local_primary",
+        cost_tokens=output_tokens,
+        response_text=response_text,
+        processing_time_ms=ttft_ms,
+        ttft_ms=ttft_ms,
+        tokens_per_second=0.0,
+        estimated_cost_saved_usd=0.0
+    )
+
+
+async def call_remote_track(
+    task_id: str,
+    prompt: str,
+    reason: str = "normal_routing"
+) -> QueryResponse:
+    """Legacy alias for call_remote_fireworks used by benchmarks."""
+    response_text, input_tokens, output_tokens, ttft_ms = await call_remote_fireworks(task_id, prompt, reason)
+    if response_text is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Remote Fireworks call failed"
+        )
+    return QueryResponse(
+        task_id=task_id,
+        routed_to=f"Remote Fireworks AI ({REMOTE_MODEL})",
+        routed_via="cloud_primary",
+        cost_tokens=output_tokens,
+        response_text=response_text,
+        processing_time_ms=ttft_ms,
+        ttft_ms=ttft_ms,
+        tokens_per_second=0.0,
+        estimated_cost_saved_usd=0.0
+    )
 
 
 # ============================================================================

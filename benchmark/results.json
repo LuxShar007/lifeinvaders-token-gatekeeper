@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-09T15:07:00.419816+00:00",
+  "generated_at": "2026-07-10T18:18:58.414930+00:00",
   "dataset": {
     "path": "benchmark/ground_truth.json",
     "total_items": 24,
@@ -15,7 +15,7 @@
     ]
   },
   "config": {
-    "local_model": "llama3.2:latest",
+    "local_model": "gemma4:2b",
     "local_route_threshold": 0.4,
     "code_confidence_threshold": 0.8,
     "fireworks_cost_per_1k_tokens_usd": 0.2,
@@ -25,15 +25,15 @@
     {
       "strategy": "gatekeeper_router",
       "total_items": 24,
-      "accuracy": 0.167,
-      "routing_accuracy": 0.167,
-      "false_pass_count": 1,
-      "routed_local": 5,
-      "routed_remote": 0,
-      "errors": 19,
-      "local_tokens": 340,
-      "remote_billed_tokens": 0,
-      "estimated_cost_usd": 0.0,
+      "accuracy": 0.458,
+      "routing_accuracy": 0.292,
+      "false_pass_count": 0,
+      "routed_local": 0,
+      "routed_remote": 24,
+      "errors": 0,
+      "local_tokens": 0,
+      "remote_billed_tokens": 462,
+      "estimated_cost_usd": 0.0924,
       "estimated_savings_vs_always_remote_pct": 0.0
     },
     {
@@ -53,13 +53,13 @@
     {
       "strategy": "random",
       "total_items": 24,
-      "accuracy": 0.375,
-      "routing_accuracy": 0.375,
+      "accuracy": 0.0,
+      "routing_accuracy": 0.0,
       "false_pass_count": 0,
-      "routed_local": 9,
+      "routed_local": 0,
       "routed_remote": 0,
-      "errors": 15,
-      "local_tokens": 757,
+      "errors": 24,
+      "local_tokens": 0,
       "remote_billed_tokens": 0,
       "estimated_cost_usd": 0.0,
       "estimated_savings_vs_always_remote_pct": 0.0
@@ -71,337 +71,337 @@
         "id": "factual-1",
         "category": "Factual",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "remote",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 40,
-        "elapsed_s": 13.281,
-        "routed_to": "Local Ollama (llama3.2:latest) [Factual, confidence=1.00]",
-        "response_text": "The capital of Japan is Tokyo.",
+        "cost_tokens": 7,
+        "elapsed_s": 2.456,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
         "error": null
       },
       {
         "id": "factual-2",
         "category": "Factual",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "remote",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 74,
-        "elapsed_s": 19.11,
-        "routed_to": "Local Ollama (llama3.2:latest) [Factual, confidence=1.00]",
-        "response_text": "There are 7 continents on Earth:\n\n1. Africa\n2. Antarctica\n3. Asia\n4. Australia/Oceania\n5. Europe\n6. North America\n7. South America",
+        "cost_tokens": 8,
+        "elapsed_s": 2.219,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
         "error": null
       },
       {
         "id": "factual-3",
         "category": "Factual",
         "expected_tier": "remote",
-        "actual_tier": "local",
-        "routing_correct": false,
+        "actual_tier": "remote",
+        "routing_correct": true,
         "answer_correct": false,
-        "false_pass": true,
-        "cost_tokens": 54,
-        "elapsed_s": 11.812,
-        "routed_to": "Local Ollama (llama3.2:latest) [Factual, confidence=1.00]",
-        "response_text": "The Nobel Prize in Literature for 2003 was awarded to Peter Englund.",
+        "false_pass": false,
+        "cost_tokens": 12,
+        "elapsed_s": 2.34,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
         "error": null
       },
       {
         "id": "conversational-1",
         "category": "Conversational",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
+        "actual_tier": "remote",
+        "routing_correct": false,
         "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 84,
-        "elapsed_s": 19.0,
-        "routed_to": "Local Ollama (llama3.2:latest) [Conversational, confidence=1.00]",
-        "response_text": "I'm just a language model, so I don't have emotions or feelings like humans do. However, I'm functioning properly and ready to assist you with any questions or tasks you may have! How about you? How's your day going so far?",
+        "cost_tokens": 7,
+        "elapsed_s": 3.001,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
         "error": null
       },
       {
         "id": "conversational-2",
         "category": "Conversational",
         "expected_tier": "local",
-        "actual_tier": "error",
+        "actual_tier": "remote",
         "routing_correct": false,
-        "answer_correct": false,
+        "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 37.157,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "504: Local Ollama request timed out: "
+        "cost_tokens": 13,
+        "elapsed_s": 2.514,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "conversational-3",
         "category": "Conversational",
         "expected_tier": "local",
-        "actual_tier": "error",
+        "actual_tier": "remote",
         "routing_correct": false,
-        "answer_correct": false,
+        "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 38.734,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "504: Local Ollama request timed out: "
+        "cost_tokens": 17,
+        "elapsed_s": 2.247,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "translation-1",
         "category": "Translation",
         "expected_tier": "local",
-        "actual_tier": "error",
+        "actual_tier": "remote",
         "routing_correct": false,
         "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 6189.125,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 8,
+        "elapsed_s": 2.116,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "translation-2",
         "category": "Translation",
         "expected_tier": "local",
-        "actual_tier": "error",
+        "actual_tier": "remote",
         "routing_correct": false,
         "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 18447.797,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 10,
+        "elapsed_s": 1.852,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "translation-3",
         "category": "Translation",
         "expected_tier": "remote",
-        "actual_tier": "error",
-        "routing_correct": false,
-        "answer_correct": false,
+        "actual_tier": "remote",
+        "routing_correct": true,
+        "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 13.64,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 28,
+        "elapsed_s": 1.766,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "summarization-1",
         "category": "Summarization",
         "expected_tier": "local",
-        "actual_tier": "error",
+        "actual_tier": "remote",
         "routing_correct": false,
-        "answer_correct": false,
+        "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 12.5,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 24,
+        "elapsed_s": 2.03,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "summarization-2",
         "category": "Summarization",
         "expected_tier": "local",
-        "actual_tier": "error",
+        "actual_tier": "remote",
         "routing_correct": false,
         "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 2646.157,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 13,
+        "elapsed_s": 2.223,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "summarization-3",
         "category": "Summarization",
         "expected_tier": "remote",
-        "actual_tier": "error",
-        "routing_correct": false,
-        "answer_correct": false,
+        "actual_tier": "remote",
+        "routing_correct": true,
+        "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 11.891,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 29,
+        "elapsed_s": 2.22,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "creative-1",
         "category": "Creative",
         "expected_tier": "local",
-        "actual_tier": "error",
+        "actual_tier": "remote",
         "routing_correct": false,
-        "answer_correct": false,
+        "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 12.984,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 9,
+        "elapsed_s": 2.608,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "creative-2",
         "category": "Creative",
         "expected_tier": "local",
-        "actual_tier": "error",
+        "actual_tier": "remote",
         "routing_correct": false,
-        "answer_correct": false,
+        "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 11.719,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 11,
+        "elapsed_s": 2.506,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "creative-3",
         "category": "Creative",
         "expected_tier": "remote",
-        "actual_tier": "error",
-        "routing_correct": false,
-        "answer_correct": false,
+        "actual_tier": "remote",
+        "routing_correct": true,
+        "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 11.515,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 24,
+        "elapsed_s": 2.039,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "logic-1",
         "category": "Logic",
         "expected_tier": "local",
-        "actual_tier": "error",
+        "actual_tier": "remote",
         "routing_correct": false,
         "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 11.797,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 27,
+        "elapsed_s": 1.705,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "logic-2",
         "category": "Logic",
         "expected_tier": "local",
-        "actual_tier": "error",
+        "actual_tier": "remote",
         "routing_correct": false,
-        "answer_correct": false,
+        "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 11.891,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 17,
+        "elapsed_s": 1.757,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "logic-3",
         "category": "Logic",
         "expected_tier": "remote",
-        "actual_tier": "error",
-        "routing_correct": false,
+        "actual_tier": "remote",
+        "routing_correct": true,
         "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 11.234,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 47,
+        "elapsed_s": 1.917,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "math-1",
         "category": "Math",
         "expected_tier": "local",
-        "actual_tier": "error",
+        "actual_tier": "remote",
         "routing_correct": false,
         "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 11.391,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 9,
+        "elapsed_s": 2.24,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "math-2",
         "category": "Math",
         "expected_tier": "local",
-        "actual_tier": "error",
+        "actual_tier": "remote",
         "routing_correct": false,
         "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 9.218,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 9,
+        "elapsed_s": 2.141,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "math-3",
         "category": "Math",
         "expected_tier": "remote",
-        "actual_tier": "error",
-        "routing_correct": false,
+        "actual_tier": "remote",
+        "routing_correct": true,
         "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 6.61,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 40,
+        "elapsed_s": 2.206,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "code-1",
         "category": "Code",
         "expected_tier": "local",
-        "actual_tier": "error",
+        "actual_tier": "remote",
         "routing_correct": false,
         "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 36.453,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "504: Local Ollama request timed out: "
+        "cost_tokens": 11,
+        "elapsed_s": 2.514,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       },
       {
         "id": "code-2",
         "category": "Code",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "remote",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 88,
-        "elapsed_s": 18.703,
-        "routed_to": "Local Ollama (llama3.2:latest) [Code, confidence=1.00]",
-        "response_text": "def square(num):\n    \"\"\"\n    Returns the square of a given number.\n\n    Args:\n        num (float): The number to be squared.\n\n    Returns:\n        float: The square of the input number.\n    \"\"\"\n    return num ** 2",
+        "cost_tokens": 12,
+        "elapsed_s": 3.293,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
         "error": null
       },
       {
         "id": "code-3",
         "category": "Code",
         "expected_tier": "remote",
-        "actual_tier": "error",
-        "routing_correct": false,
-        "answer_correct": false,
+        "actual_tier": "remote",
+        "routing_correct": true,
+        "answer_correct": true,
         "false_pass": false,
-        "cost_tokens": 0,
-        "elapsed_s": 7.985,
-        "routed_to": "error",
-        "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "cost_tokens": 70,
+        "elapsed_s": 2.153,
+        "routed_to": "",
+        "response_text": "\u26a0\ufe0f Service temporarily unavailable. Both remote and local tiers failed to process request.",
+        "error": null
       }
     ],
     "always_remote": [
@@ -414,10 +414,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 1.129,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "factual-2",
@@ -428,10 +428,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.642,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "factual-3",
@@ -442,10 +442,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.795,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "conversational-1",
@@ -456,10 +456,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.806,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "conversational-2",
@@ -470,10 +470,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.47,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "conversational-3",
@@ -484,10 +484,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.578,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "translation-1",
@@ -498,10 +498,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.516,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "translation-2",
@@ -512,10 +512,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.463,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "translation-3",
@@ -526,10 +526,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.521,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "summarization-1",
@@ -540,10 +540,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.675,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "summarization-2",
@@ -554,10 +554,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.467,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "summarization-3",
@@ -568,10 +568,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.427,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "creative-1",
@@ -582,10 +582,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.597,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "creative-2",
@@ -596,10 +596,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.484,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "creative-3",
@@ -610,10 +610,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.57,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "logic-1",
@@ -624,10 +624,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.552,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "logic-2",
@@ -638,10 +638,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.733,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "logic-3",
@@ -652,10 +652,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.551,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "math-1",
@@ -666,10 +666,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.541,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "math-2",
@@ -680,10 +680,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.571,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "math-3",
@@ -694,10 +694,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.549,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "code-1",
@@ -708,10 +708,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.988,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "code-2",
@@ -722,10 +722,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.583,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "code-3",
@@ -736,10 +736,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.544,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       }
     ],
     "random": [
@@ -747,29 +747,29 @@
         "id": "factual-1",
         "category": "Factual",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "error",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 40,
-        "elapsed_s": 3.657,
-        "routed_to": "Local Ollama (llama3.2:latest) [Factual, confidence=0.50]",
-        "response_text": "The capital of Japan is Tokyo.",
-        "error": null
+        "cost_tokens": 0,
+        "elapsed_s": 0.802,
+        "routed_to": "error",
+        "response_text": "",
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "factual-2",
         "category": "Factual",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "error",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 71,
-        "elapsed_s": 9.796,
-        "routed_to": "Local Ollama (llama3.2:latest) [Factual, confidence=0.50]",
-        "response_text": "There are 7 continents on Earth:\n\n1. Africa\n2. Antarctica\n3. Asia\n4. Australia\n5. Europe\n6. North America\n7. South America",
-        "error": null
+        "cost_tokens": 0,
+        "elapsed_s": 0.795,
+        "routed_to": "error",
+        "response_text": "",
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "factual-3",
@@ -780,24 +780,24 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 1.104,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "conversational-1",
         "category": "Conversational",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "error",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 81,
-        "elapsed_s": 12.016,
-        "routed_to": "Local Ollama (llama3.2:latest) [Conversational, confidence=0.50]",
-        "response_text": "I'm just a language model, so I don't have emotions or feelings like humans do. However, I'm functioning properly and ready to help with any questions or tasks you may have! How about you? How's your day going?",
-        "error": null
+        "cost_tokens": 0,
+        "elapsed_s": 0.812,
+        "routed_to": "error",
+        "response_text": "",
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "conversational-2",
@@ -808,10 +808,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 30.984,
+        "elapsed_s": 0.782,
         "routed_to": "error",
         "response_text": "",
-        "error": "timeout: "
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "conversational-3",
@@ -822,38 +822,38 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 31.532,
+        "elapsed_s": 0.793,
         "routed_to": "error",
         "response_text": "",
-        "error": "timeout: "
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "translation-1",
         "category": "Translation",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "error",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 120,
-        "elapsed_s": 20.515,
-        "routed_to": "Local Ollama (llama3.2:latest) [Translation, confidence=0.50]",
-        "response_text": "The translation of \"Good morning\" into Spanish is:\n\n\"Buenos d\u00edas\"\n\nIf you want to be more formal, you can use:\n\n\"Buena ma\u00f1ana\"\n\nOr if you want to say it in a more informal way, you can use:\n\n\"Hola, buen d\u00eda\"\n\nBut the most common and universally accepted greeting is:\n\n\"Buenos d\u00edas\"\n\nDepending on the time of day and the level of formality you need.",
-        "error": null
+        "cost_tokens": 0,
+        "elapsed_s": 0.796,
+        "routed_to": "error",
+        "response_text": "",
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "translation-2",
         "category": "Translation",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "error",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 89,
-        "elapsed_s": 13.25,
-        "routed_to": "Local Ollama (llama3.2:latest) [Translation, confidence=0.50]",
-        "response_text": "The translation of \"Thank you very much\" into French is:\n\n\"Merci beaucoup\"\n\nNote that the word order and pronunciation may vary depending on the context and region. However, \"Merci beaucoup\" is a common and polite way to express gratitude in French.",
-        "error": null
+        "cost_tokens": 0,
+        "elapsed_s": 0.75,
+        "routed_to": "error",
+        "response_text": "",
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "translation-3",
@@ -864,38 +864,38 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.612,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "summarization-1",
         "category": "Summarization",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "error",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 66,
-        "elapsed_s": 6.407,
-        "routed_to": "Local Ollama (llama3.2:latest) [Summarization, confidence=0.50]",
-        "response_text": "A domesticated cat is sitting on a mat, observing birds through the window.",
-        "error": null
+        "cost_tokens": 0,
+        "elapsed_s": 0.792,
+        "routed_to": "error",
+        "response_text": "",
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "summarization-2",
         "category": "Summarization",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "error",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 128,
-        "elapsed_s": 21.656,
-        "routed_to": "Local Ollama (llama3.2:latest) [Summarization, confidence=0.50]",
-        "response_text": "In Verona, Italy, two rival families, the Montagues and the Capulets, have a long-standing feud that ultimately leads to the tragic fate of their children, Romeo and Juliet, who fall in love despite the danger and societal norms against them. The star-crossed lovers' passion and impulsive decisions lead to a series of events that culminate in their deaths, bringing peace and an end to the bitter conflict between their families.",
-        "error": null
+        "cost_tokens": 0,
+        "elapsed_s": 0.782,
+        "routed_to": "error",
+        "response_text": "",
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "summarization-3",
@@ -906,24 +906,24 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 31.234,
+        "elapsed_s": 0.829,
         "routed_to": "error",
         "response_text": "",
-        "error": "timeout: "
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "creative-1",
         "category": "Creative",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "error",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 51,
-        "elapsed_s": 6.469,
-        "routed_to": "Local Ollama (llama3.2:latest) [Creative, confidence=0.50]",
-        "response_text": "The ocean's waves crash on the shore,\nA soothing sound that we adore.",
-        "error": null
+        "cost_tokens": 0,
+        "elapsed_s": 0.802,
+        "routed_to": "error",
+        "response_text": "",
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "creative-2",
@@ -934,10 +934,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 31.141,
+        "elapsed_s": 0.841,
         "routed_to": "error",
         "response_text": "",
-        "error": "timeout: "
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "creative-3",
@@ -948,24 +948,24 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 31.203,
+        "elapsed_s": 0.82,
         "routed_to": "error",
         "response_text": "",
-        "error": "timeout: "
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "logic-1",
         "category": "Logic",
         "expected_tier": "local",
-        "actual_tier": "local",
-        "routing_correct": true,
-        "answer_correct": true,
+        "actual_tier": "error",
+        "routing_correct": false,
+        "answer_correct": false,
         "false_pass": false,
-        "cost_tokens": 111,
-        "elapsed_s": 15.157,
-        "routed_to": "Local Ollama (llama3.2:latest) [Logic, confidence=0.50]",
-        "response_text": "No.\n\nThe statement \"some flowers fade quickly\" only tells us that at least one type of flower (not just roses) has this property. It doesn't provide evidence that roses themselves are among those that fade quickly. We can't conclude all roses fade quickly based on the given information.",
-        "error": null
+        "cost_tokens": 0,
+        "elapsed_s": 0.775,
+        "routed_to": "error",
+        "response_text": "",
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "logic-2",
@@ -976,10 +976,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.826,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "logic-3",
@@ -990,10 +990,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 31.031,
+        "elapsed_s": 0.911,
         "routed_to": "error",
         "response_text": "",
-        "error": "timeout: "
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "math-1",
@@ -1004,10 +1004,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.852,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "math-2",
@@ -1018,10 +1018,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.607,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "math-3",
@@ -1032,10 +1032,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 31.359,
+        "elapsed_s": 0.645,
         "routed_to": "error",
         "response_text": "",
-        "error": "timeout: "
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "code-1",
@@ -1046,10 +1046,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 31.422,
+        "elapsed_s": 0.849,
         "routed_to": "error",
         "response_text": "",
-        "error": "timeout: "
+        "error": "500: Local Ollama call failed"
       },
       {
         "id": "code-2",
@@ -1060,10 +1060,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.507,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       },
       {
         "id": "code-3",
@@ -1074,10 +1074,10 @@
         "answer_correct": false,
         "false_pass": false,
         "cost_tokens": 0,
-        "elapsed_s": 0.0,
+        "elapsed_s": 0.434,
         "routed_to": "error",
         "response_text": "",
-        "error": "500: Infrastructure Configuration Error: FIREWORKS_API_KEY environment variable is not set inside the container."
+        "error": "500: Remote Fireworks call failed"
       }
     ]
   }
