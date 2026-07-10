@@ -9,7 +9,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
+<<<<<<< HEAD
 # Fetch the active token string from environment variables
+=======
+# Fetch the active token string provisioned on Archit's branch from environment variables
+>>>>>>> e54e9328fd202cafd7f21179b3af3f52f57ddc48
 FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY")
 FIREWORKS_URL = "https://api.fireworks.ai/inference/v1/chat/completions"
 LOCAL_OLLAMA_URL = os.getenv("LOCAL_OLLAMA_URL", "http://localhost:11434")
