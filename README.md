@@ -205,3 +205,10 @@ and that one concrete false pass occurred and was correctly flagged:
 - `requirements.txt` was missing `fastapi` and `uvicorn` even though
   `main.py` imports both and the Dockerfile runs `uvicorn main:app` —
   added here since the harness needs them to import `main.py` at all.
+
+## 👥 Team & Roles
+
+* **Sharvin Mhatre** (Infrastructure): Core proxy architecture, hybrid token routing, Docker pipelines, and latency/cost benchmarking.
+* **Archit Jaijith** (Data): Test engineering, dataset curation, mock I/O data pipelines, and validation task payloads.
+* **Shravani Mayekar** (Interface): Frontend dashboard development, UI/UX design implementation, and presentation systems.
+
