@@ -52,7 +52,7 @@ logging.basicConfig(
 logger = logging.getLogger("LifeInvaders.Router")
 
 # Environment variables with sensible defaults
-FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY", "fw_2vfG1j8mYgx4UaNQJCUZDd")
+FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY")
 FIREWORKS_BASE_URL = os.getenv("FIREWORKS_BASE_URL", "https://api.fireworks.ai/inference/v1")
 LOCAL_OLLAMA_URL = os.getenv("LOCAL_OLLAMA_URL", "http://localhost:11434")
 LOCAL_MODEL = os.getenv("LOCAL_MODEL", "gemma4:2b")
