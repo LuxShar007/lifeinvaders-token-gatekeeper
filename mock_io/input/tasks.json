@@ -1,0 +1,27 @@
+[
+  {
+    "task_id": "task_001",
+    "category": "code",
+    "prompt": "Write a Python function to calculate factorial using recursion"
+  },
+  {
+    "task_id": "task_002",
+    "category": "general",
+    "prompt": "Explain the theory of relativity in simple terms"
+  },
+  {
+    "task_id": "task_003",
+    "category": "code",
+    "prompt": "Debug this: def add(a, b) return a + b"
+  },
+  {
+    "task_id": "task_004",
+    "category": "reasoning",
+    "prompt": "If it takes 5 workers 3 days to build a house, how many days for 15 workers?"
+  },
+  {
+    "task_id": "task_005",
+    "category": "general",
+    "prompt": "What are the benefits of machine learning in healthcare?"
+  }
+]

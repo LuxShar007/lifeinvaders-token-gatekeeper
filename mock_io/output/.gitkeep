@@ -1,0 +1,3 @@
+# Placeholder file to preserve directory structure
+# mock_io/output/ contains generated results and is excluded from version control
+# Results are written here at runtime by run_mock_eval.py

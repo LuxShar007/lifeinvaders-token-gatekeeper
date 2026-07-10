@@ -3,7 +3,6 @@ __pycache__/
 *.pyc
 .venv/
 venv/
-mock_io/output/
 # Python bytecode caches
 __pycache__/
 *.pyc
