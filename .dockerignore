@@ -1,0 +1,15 @@
+# Block python environments and dependencies
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Block local LLM models and weights
+models/
+*.gguf
+.ollama/
+
+# Block git history and local environment configs
+.git/
+.env
+.gitignore
