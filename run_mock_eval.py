@@ -4,14 +4,6 @@ LifeInvaders Mock Evaluation Harness - FastAPI Proxy-Routed Processing
 
 Evaluation framework for batch processing tasks through a centralized
 FastAPI proxy gateway that handles all routing decisions and model selection.
-
-Features:
-- Async batch processing with semaphore concurrency control
-- All requests proxied through FastAPI gateway (no direct Ollama/Fireworks calls)
-- Full metrics collection: TTFT, throughput, tokens
-- Thread-safe JSON result aggregation
-- Performance analysis and reporting
-- Unified request schema for proxy gateway
 """
 
 import os
@@ -21,26 +13,37 @@ import time
 import asyncio
 import logging
 from datetime import datetime
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, Union
 from pathlib import Path
 
 import httpx
+
+# Pre-define availability flags with Any typing to silence Pylance attribute warnings completely
+tiktoken: Any = None
+transformers: Any = None
+TOKENIZER: Any = None
+TIKTOKEN_AVAILABLE = False
+
 try:
-    import tiktoken
+    import tiktoken as tiktoken_module
+    tiktoken = tiktoken_module
     TIKTOKEN_AVAILABLE = True
 except ImportError:
-    TIKTOKEN_AVAILABLE = False
+    pass
 
 try:
     # pyrefly: ignore [missing-import]
-    from transformers import AutoTokenizer
+    from transformers import AutoTokenizer  # type: ignore
     TOKENIZER = AutoTokenizer.from_pretrained("google/gemma-4-9b-it")
 except Exception:
-    TOKENIZER = None
+    pass
 
 
 if hasattr(sys.stdout, 'reconfigure'):
-    sys.stdout.reconfigure(encoding='utf-8')
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')  # type: ignore
+    except Exception:
+        pass
 
 from dotenv import load_dotenv
 
@@ -68,16 +71,9 @@ OUTPUT_FILE = os.getenv("OUTPUT_FILE", "mock_io/output/results.json")
 # Complexity score calibration (used for proxy routing decisions)
 DEFAULT_COMPLEXITY_SCORE = 0.5
 COMPLEXITY_BY_CATEGORY = {
-    "code": 0.85,
-    "math": 0.75,
-    "logic": 0.65,
-    "reasoning": 0.65,
-    "creative": 0.45,
-    "summarization": 0.35,
-    "translation": 0.25,
-    "conversational": 0.15,
-    "factual": 0.15,
-    "general": 0.35,
+    "code": 0.85, "math": 0.75, "logic": 0.65, "reasoning": 0.65,
+    "creative": 0.45, "summarization": 0.35, "translation": 0.25,
+    "conversational": 0.15, "factual": 0.15, "general": 0.35,
 }
 
 # Logging configuration
@@ -100,7 +96,7 @@ def count_tokens(text: str) -> int:
     Estimate token count using best available tokenizer.
     Priority: tiktoken > transformers > fallback approximation
     """
-    if TIKTOKEN_AVAILABLE:
+    if TIKTOKEN_AVAILABLE and tiktoken is not None:
         try:
             encoding = tiktoken.get_encoding("cl100k_base")
             return len(encoding.encode(text))
@@ -124,12 +120,6 @@ def count_tokens(text: str) -> int:
 def get_complexity_score(task: Dict[str, Any]) -> float:
     """
     Determine complexity score for a task based on its category.
-    
-    Args:
-        task: Task dict with optional 'category' key
-    
-    Returns:
-        Complexity score (0.0-1.0)
     """
     if "complexity" in task:
         return float(task.get("complexity", DEFAULT_COMPLEXITY_SCORE))
@@ -145,28 +135,19 @@ def get_complexity_score(task: Dict[str, Any]) -> float:
 async def call_proxy_gateway(task: Dict[str, Any]) -> tuple[Optional[Dict[str, Any]], float]:
     """
     Send task payload to FastAPI proxy gateway and get response.
-    
-    Args:
-        task: Task dict with id, prompt, and optional category
-    
-    Returns:
-        Tuple of (response_dict or None, elapsed_ms)
-        Response dict contains: response_text, input_tokens, output_tokens, routed_via
     """
     task_id = task.get("id", task.get("task_id", "unknown"))
     prompt = task.get("prompt", "")
     complexity_score = get_complexity_score(task)
     
-    # Build request payload per schema
     payload = {
         "task_id": task_id,
         "prompt": prompt,
         "complexity_score": complexity_score
     }
     
+    start_time = time.time()
     try:
-        start_time = time.time()
-        
         async with httpx.AsyncClient(timeout=PROXY_TIMEOUT) as client:
             response = await client.post(
                 PROXY_ENDPOINT,
@@ -176,7 +157,6 @@ async def call_proxy_gateway(task: Dict[str, Any]) -> tuple[Optional[Dict[str, A
             data = response.json()
         
         elapsed_ms = (time.time() - start_time) * 1000
-        
         logger.debug(f"✅ Proxy gateway SUCCESS [task={task_id}, elapsed={elapsed_ms:.2f}ms]")
         return data, elapsed_ms
     
@@ -193,12 +173,6 @@ async def call_proxy_gateway(task: Dict[str, Any]) -> tuple[Optional[Dict[str, A
 async def evaluate_single_task(task: Dict[str, Any]) -> Dict[str, Any]:
     """
     Process a single task through the FastAPI proxy gateway.
-    
-    Args:
-        task: Task dict with keys: id (or task_id), prompt, category
-    
-    Returns:
-        Result dict with response, routing decision, and metrics
     """
     async with CONCURRENCY_LIMITER:
         start_time = time.time()
@@ -230,14 +204,11 @@ async def evaluate_single_task(task: Dict[str, Any]) -> Dict[str, Any]:
         try:
             # Call proxy gateway with task payload
             gateway_response, ttft_ms = await call_proxy_gateway(task)
-            
             processing_time_ms = (time.time() - start_time) * 1000
             
             if gateway_response:
-                # Extract response data from proxy with flexible key mapping
                 response_text = gateway_response.get("response_text", gateway_response.get("response", ""))
                 
-                # Extract routing information - try multiple key names, convert empty strings to "unknown"
                 routed_via = (
                     gateway_response.get("routed_via") or
                     gateway_response.get("routed_to") or
@@ -246,21 +217,17 @@ async def evaluate_single_task(task: Dict[str, Any]) -> Dict[str, Any]:
                     "unknown"
                 )
                 
-                # Normalize empty strings to "unknown"
                 if not routed_via or routed_via.strip() == "":
                     routed_via = "unknown"
                 
-                # Extract token counts from various possible keys
                 metrics = gateway_response.get("metrics", {})
                 
-                # Try to get input tokens from multiple sources
                 input_tokens = (
                     metrics.get("input_tokens") or
                     gateway_response.get("input_tokens") or
-                    input_tokens  # fallback to local count
+                    input_tokens
                 )
                 
-                # Try to get output tokens - proxy returns cost_tokens
                 output_tokens = (
                     metrics.get("output_tokens") or
                     gateway_response.get("output_tokens") or
@@ -268,16 +235,13 @@ async def evaluate_single_task(task: Dict[str, Any]) -> Dict[str, Any]:
                     0
                 )
                 
-                # Get performance metrics from response
                 processing_time_ms = gateway_response.get("processing_time_ms", processing_time_ms)
                 ttft_ms = gateway_response.get("ttft_ms", ttft_ms)
                 tokens_per_second = gateway_response.get("tokens_per_second", 0.0)
                 
-                # Fallback: calculate throughput if not provided
                 if tokens_per_second == 0.0 and output_tokens > 0 and processing_time_ms > 0:
                     tokens_per_second = (output_tokens / (processing_time_ms / 1000))
                 
-                # Update result with gateway response
                 result.update({
                     "status": "success",
                     "response_text": response_text[:200] + "..." if len(response_text) > 200 else response_text,
@@ -289,9 +253,7 @@ async def evaluate_single_task(task: Dict[str, Any]) -> Dict[str, Any]:
                     "tokens_per_second": round(tokens_per_second, 2),
                 })
                 
-                logger.info(
-                    f"✅ Task {task_id} complete [route={routed_via}, tokens_out={output_tokens}, status=success]"
-                )
+                logger.info(f"✅ Task {task_id} complete [route={routed_via}, tokens_out={output_tokens}, status=success]")
             else:
                 result["status"] = "failure"
                 result["response_text"] = "Proxy gateway unavailable"
@@ -319,10 +281,7 @@ async def run_evaluation():
     logger.info("🚀 Starting LifeInvaders Mock Evaluation (Proxy-routed)")
     logger.info(f"📂 Input file: {INPUT_FILE}")
     logger.info(f"📂 Output file: {OUTPUT_FILE}")
-    logger.info(f"🔗 Proxy endpoint: {PROXY_ENDPOINT}")
-    logger.info(f"⚙️ Configuration: Proxy timeout={PROXY_TIMEOUT}s, Concurrency={MAX_CONCURRENT_TASKS}")
     
-    # Load input tasks
     if not os.path.exists(INPUT_FILE):
         logger.error(f"❌ Input file not found: {INPUT_FILE}")
         return
@@ -332,14 +291,14 @@ async def run_evaluation():
     
     logger.info(f"📋 Loaded {len(tasks)} tasks from dataset")
     
-    # Process all tasks concurrently
     logger.info("⏳ Running batch evaluation through proxy gateway...")
     evaluation_coroutines = [evaluate_single_task(task) for task in tasks]
-    results = await asyncio.gather(*evaluation_coroutines, return_exceptions=True)
     
-    # Filter out any exceptions
-    completed_results: List[Dict[str, Any]] = [r for r in results if not isinstance(r, Exception)]
-    failed_results = [r for r in results if isinstance(r, Exception)]
+    # Typed Union block prevents list comprehension mismatch errors on gather
+    results: List[Union[Dict[str, Any], BaseException]] = await asyncio.gather(*evaluation_coroutines, return_exceptions=True)
+    
+    completed_results: List[Dict[str, Any]] = [r for r in results if isinstance(r, dict)]
+    failed_results = [r for r in results if isinstance(r, BaseException)]
     
     if failed_results:
         logger.warning(f"⚠️ {len(failed_results)} tasks failed with exceptions")
@@ -350,8 +309,6 @@ async def run_evaluation():
         json.dump(completed_results, f, indent=2)
     
     logger.info(f"✅ Results written to {OUTPUT_FILE}")
-    
-    # Generate performance report
     generate_performance_report(completed_results)
 
 
@@ -363,42 +320,30 @@ def generate_performance_report(results: List[Dict[str, Any]]):
         logger.warning("No results to analyze")
         return
     
-    # Aggregate statistics
     total_tasks = len(results)
     successful_tasks = sum(1 for r in results if r.get("status") == "success")
     failed_tasks = sum(1 for r in results if r.get("status") in ("failure", "error"))
     
-    # Routing breakdown
-    routing_counts = {}
-    for r in results:
-        route = r.get("routed_via", "unknown")
-        routing_counts[route] = routing_counts.get(route, 0) + 1
-    
-    # Token statistics
     total_input_tokens = sum(r.get("input_tokens", 0) for r in results)
     total_output_tokens = sum(r.get("output_tokens", 0) for r in results)
     
-    # Routing breakdown with Ollama/Fireworks detection
-    routing_counts = {}
+    routing_counts: Dict[str, int] = {}
     ollama_count = 0
     fireworks_count = 0
     for r in results:
-        route = r.get("routed_via", "unknown")
+        route = str(r.get("routed_via", "unknown"))
         routing_counts[route] = routing_counts.get(route, 0) + 1
         
-        # Count Ollama vs Fireworks
-        if route and ("ollama" in route.lower() or "local" in route.lower()):
+        if "ollama" in route.lower() or "local" in route.lower():
             ollama_count += 1
-        elif route and ("fireworks" in route.lower() or "cloud" in route.lower() or "remote" in route.lower()):
+        elif "fireworks" in route.lower() or "cloud" in route.lower() or "remote" in route.lower():
             fireworks_count += 1
     
-    # Performance metrics
     successful_results = [r for r in results if r.get("status") == "success"]
     avg_processing_time = sum(r.get("processing_time_ms", 0) for r in successful_results) / len(successful_results) if successful_results else 0
     avg_ttft = sum(r.get("ttft_ms", 0) for r in successful_results) / len(successful_results) if successful_results else 0
     avg_throughput = sum(r.get("tokens_per_second", 0) for r in successful_results) / len(successful_results) if successful_results else 0
     
-    # Print report
     print("\n" + "="*70)
     print("📊 PROXY GATEWAY BATCH EVALUATION REPORT")
     print("="*70)
@@ -418,23 +363,13 @@ def generate_performance_report(results: List[Dict[str, Any]]):
     print(f"\n📊 TOKEN STATISTICS:")
     print(f"  Total Input Tokens: {total_input_tokens:,}")
     print(f"  Total Output Tokens: {total_output_tokens:,}")
-    if total_tasks > 0:
-        avg_input = total_input_tokens // total_tasks
-        avg_output = total_output_tokens // total_tasks
-        print(f"  Avg Input Tokens/Task: {avg_input}")
-        print(f"  Avg Output Tokens/Task: {avg_output}")
     
     print(f"\n⚡ PERFORMANCE METRICS:")
     print(f"  Avg Processing Time: {avg_processing_time:.2f}ms")
     print(f"  Avg TTFT: {avg_ttft:.2f}ms")
     print(f"  Avg Throughput: {avg_throughput:.2f} tokens/sec")
-    
     print("\n" + "="*70 + "\n")
 
-
-# ============================================================================
-# ENTRY POINT
-# ============================================================================
 
 if __name__ == "__main__":
     try:

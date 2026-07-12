@@ -18,7 +18,7 @@ done
 
 # 3. Execute the evaluation benchmark harness to process all tasks
 echo "📊 Running evaluation harness..."
-python harness.py
+python benchmark/harness.py
 
 # 4. Clean up the background server process and exit cleanly
 echo "🏁 Evaluation complete. Exiting container."
