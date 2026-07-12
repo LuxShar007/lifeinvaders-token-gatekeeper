@@ -66,7 +66,7 @@ MAX_CONCURRENT_TASKS = int(os.getenv("MAX_CONCURRENT_TASKS", "3"))
 
 # File paths
 INPUT_FILE = os.getenv("INPUT_FILE", "mock_io/input/tasks.json")
-OUTPUT_FILE = os.getenv("OUTPUT_FILE", "mock_io/output/results.json")
+OUTPUT_FILE = "mock_io/output/results.json"
 
 # Complexity score calibration (used for proxy routing decisions)
 DEFAULT_COMPLEXITY_SCORE = 0.5
@@ -243,11 +243,10 @@ async def evaluate_single_task(task: Dict[str, Any]) -> Dict[str, Any]:
                     tokens_per_second = (output_tokens / (processing_time_ms / 1000))
                 
                 status_val = gateway_response.get("status") or "success"
-                resp_val = response_text[:200] + "..." if len(response_text) > 200 else response_text
                 result.update({
                     "status": status_val,
-                    "response_text": resp_val,
-                    "response": resp_val,
+                    "response_text": response_text,
+                    "response": response_text,
                     "input_tokens": input_tokens,
                     "output_tokens": output_tokens,
                     "routed_via": routed_via,

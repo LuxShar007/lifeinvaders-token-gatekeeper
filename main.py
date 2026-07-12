@@ -331,6 +331,7 @@ async def route_with_fallback(task_id: str, prompt: str, routing_decision: str =
                 response_text = "⚠️ Evaluation environment routing failure."
             status_val = "failure"
             routed_via = "cloud_fallback" if use_local else "local_fallback"
+            routed_to = "cloud_fallback" if use_local else "local_fallback"
             output_tokens = 0
             tokens_per_second = 0.0
             processing_time_ms = (time.time() - start_time) * 1000
