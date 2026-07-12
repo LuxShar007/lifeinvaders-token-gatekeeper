@@ -17,5 +17,5 @@ COPY . .
 VOLUME ["/input", "/output"]
 EXPOSE 8000
 
-# Inline string array boots the server, runs the evaluation, and drops a clean exit
-CMD ["/bin/bash", "-c", "python -m uvicorn main:app --host 0.0.0.0 --port 8000 & SERVER_PID=$!; for i in {1..10}; do if curl -s http://localhost:8000/ > /dev/null; then break; fi; sleep 1; done; python benchmark/harness.py; kill $SERVER_PID; exit 0"]
+# Boots the server, runs the evaluation, and keeps the server blocking/running indefinitely
+CMD ["/bin/bash", "-c", "python main.py & SERVER_PID=$!; for i in {1..10}; do if curl -s http://localhost:8000/ > /dev/null; then break; fi; sleep 1; done; python benchmark/harness.py; wait $SERVER_PID"]

@@ -20,7 +20,6 @@ done
 echo "📊 Running evaluation harness..."
 python benchmark/harness.py
 
-# 4. Clean up the background server process and exit cleanly
-echo "🏁 Evaluation complete. Exiting container."
-kill $SERVER_PID
-exit 0
+# 4. Block on the server process so it keeps the container alive
+echo "🚀 Keeping FastAPI Gateway online..."
+wait $SERVER_PID

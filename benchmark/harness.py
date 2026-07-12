@@ -25,7 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import main as router  # noqa: E402
 from validate import evaluate_result, load_ground_truth, tier_from_response  # noqa: E402
 
-RESULTS_PATH = Path("/output/results.json") if Path("/output").exists() else Path(__file__).resolve().parent / "results.json"
+RESULTS_PATH = Path(__file__).resolve().parent / "results.json"
 FIREWORKS_COST_PER_1K_TOKENS = float(os.getenv("FIREWORKS_COST_PER_1K_TOKENS", "0.20"))
 RANDOM_SEED = int(os.getenv("BENCHMARK_RANDOM_SEED", "42"))
 
