@@ -116,18 +116,22 @@ class ClassificationResponse(BaseModel):
 
 class QueryResponse(BaseModel):
     task_id: str
+    status: str = Field(default="success", description="Status of the response ('success', 'fallback', 'failure', or 'error')")
     routed_to: str
+    route: str = Field(default="local_primary", description="Active route")
     routed_via: str = Field(default="local_primary", description="Route origin")
+    active_route: str = Field(default="local_primary", description="Route alias")
     cost_tokens: int
     input_tokens: int = Field(default=0, description="Total prompt tokens processed")
     output_tokens: int = Field(default=0, description="Total generation tokens processed")
     response_text: str
+    response: str = Field(default="", description="Response content alias")
     processing_time_ms: float = Field(default=0.0, description="Total processing time")
     ttft_ms: float = Field(default=0.0, description="Time to first token")
     tokens_per_second: float = Field(default=0.0, description="Output throughput")
     estimated_cost_saved_usd: float = Field(default=0.0, description="USD saved")
 
-    @validator('routed_via')
+    @validator('routed_via', 'route', 'active_route')
     def validate_routed_via(cls, v):
         allowed = {"local_primary", "cloud_primary", "cloud_fallback", "local_fallback"}
         if v in allowed:
@@ -142,7 +146,10 @@ class MetricsRecord(BaseModel):
     prompt_complexity: Optional[str] = None
     prompt_complexity_score: float = 0.0
     active_route: str
-    status: str = Field(description="success or fallback")
+    route: Optional[str] = None
+    routed_via: Optional[str] = None
+    routed_to: Optional[str] = None
+    status: str = Field(description="success or fallback or failure or error")
     processing_time_ms: float
     ttft_ms: float
     tokens_per_second: float
@@ -150,6 +157,8 @@ class MetricsRecord(BaseModel):
     output_tokens: int
     estimated_cost_usd: float
     estimated_cost_saved_usd: float
+    response_text: Optional[str] = None
+    response: Optional[str] = None
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -189,9 +198,31 @@ class MetricsWriter:
                 records = []
                 if self.output_file.exists():
                     with open(self.output_file, 'r') as f:
-                        try: records = json.load(f)
+                        try:
+                            loaded = json.load(f)
+                            if isinstance(loaded, list):
+                                records = loaded
+                            elif isinstance(loaded, dict):
+                                records = [loaded]
                         except json.JSONDecodeError: pass
-                records.append(record.dict())
+                
+                # Convert the record to dict and apply dual-mappings
+                record_dict = record.dict()
+                
+                # Make sure response and response_text are mapped
+                resp_val = record_dict.get("response_text") or record_dict.get("response") or ""
+                record_dict["response_text"] = resp_val
+                record_dict["response"] = resp_val
+                
+                # Make sure active_route, route, routed_via, routed_to are mapped
+                route_val = record_dict.get("active_route") or record_dict.get("routed_via") or record_dict.get("route") or "unknown"
+                record_dict["active_route"] = route_val
+                record_dict["routed_via"] = route_val
+                record_dict["route"] = route_val
+                if not record_dict.get("routed_to"):
+                    record_dict["routed_to"] = route_val
+                
+                records.append(record_dict)
                 with open(self.output_file, 'w') as f: json.dump(records, f, indent=2)
             except Exception as e: logger.error(f"❌ Metrics write error: {e}")
 
@@ -295,29 +326,100 @@ async def route_with_fallback(task_id: str, prompt: str, routing_decision: str =
                 response_text, output_tokens, ttft_ms = await call_local_ollama(task_id, prompt)
                 if response_text: routed_to, routed_via, status_val = f"Local Ollama ({LOCAL_MODEL}) [FB]", "local_fallback", "fallback"
         
-        if not response_text:
-            response_text = "⚠️ Evaluation environment routing failure."
+        if not response_text or status_val in ("failure", "error"):
+            if not response_text:
+                response_text = "⚠️ Evaluation environment routing failure."
             status_val = "failure"
             routed_via = "cloud_fallback" if use_local else "local_fallback"
+            output_tokens = 0
+            tokens_per_second = 0.0
+            processing_time_ms = (time.time() - start_time) * 1000
+        else:
+            processing_time_ms = (time.time() - start_time) * 1000
+            tokens_per_second = (output_tokens / (processing_time_ms / 1000)) if processing_time_ms > 0 else 0.0
         
-        processing_time_ms = (time.time() - start_time) * 1000
-        tokens_per_second = (output_tokens / (processing_time_ms / 1000)) if processing_time_ms > 0 else 0.0
         primary_cost = calculate_cost_usd(input_tokens, output_tokens, tier="remote" if "cloud" in routed_via else "local")
         cost_saved = calculate_cost_usd(input_tokens, output_tokens, tier="remote") if "local" in routed_via else 0.0
         
         response = QueryResponse(
-            task_id=task_id, routed_to=routed_to, routed_via=routed_via, cost_tokens=input_tokens + output_tokens,
-            input_tokens=input_tokens, output_tokens=output_tokens, response_text=response_text,
-            processing_time_ms=processing_time_ms, ttft_ms=ttft_ms, tokens_per_second=tokens_per_second, estimated_cost_saved_usd=cost_saved
+            task_id=task_id,
+            status=status_val,
+            routed_to=routed_to,
+            route=routed_via,
+            routed_via=routed_via,
+            active_route=routed_via,
+            cost_tokens=input_tokens + output_tokens,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            response_text=response_text,
+            response=response_text,
+            processing_time_ms=processing_time_ms,
+            ttft_ms=ttft_ms,
+            tokens_per_second=tokens_per_second,
+            estimated_cost_saved_usd=cost_saved
         )
         await metrics_writer.append_record(MetricsRecord(
-            task_id=task_id, prompt_complexity=category, prompt_complexity_score=complexity_score, active_route=routed_via,
-            status=status_val, processing_time_ms=processing_time_ms, ttft_ms=ttft_ms, tokens_per_second=tokens_per_second,
-            input_tokens=input_tokens, output_tokens=output_tokens, estimated_cost_usd=primary_cost, estimated_cost_saved_usd=cost_saved
+            task_id=task_id,
+            prompt_complexity=category,
+            prompt_complexity_score=complexity_score,
+            active_route=routed_via,
+            route=routed_via,
+            routed_via=routed_via,
+            routed_to=routed_to,
+            status=status_val,
+            processing_time_ms=processing_time_ms,
+            ttft_ms=ttft_ms,
+            tokens_per_second=tokens_per_second,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            estimated_cost_usd=primary_cost,
+            estimated_cost_saved_usd=cost_saved,
+            response_text=response_text,
+            response=response_text
         ))
         return response, routed_via
     except Exception as e:
-        return QueryResponse(task_id=task_id, routed_to="ERROR", routed_via="local_fallback", cost_tokens=0, response_text=str(e)), "local_fallback"
+        err_msg = str(e)
+        response = QueryResponse(
+            task_id=task_id,
+            status="error",
+            routed_to="ERROR",
+            route="local_fallback",
+            routed_via="local_fallback",
+            active_route="local_fallback",
+            cost_tokens=0,
+            input_tokens=input_tokens,
+            output_tokens=0,
+            response_text=err_msg,
+            response=err_msg,
+            processing_time_ms=0.0,
+            ttft_ms=0.0,
+            tokens_per_second=0.0,
+            estimated_cost_saved_usd=0.0
+        )
+        try:
+            await metrics_writer.append_record(MetricsRecord(
+                task_id=task_id,
+                prompt_complexity="Unknown",
+                prompt_complexity_score=0.0,
+                active_route="local_fallback",
+                route="local_fallback",
+                routed_via="local_fallback",
+                routed_to="ERROR",
+                status="error",
+                processing_time_ms=0.0,
+                ttft_ms=0.0,
+                tokens_per_second=0.0,
+                input_tokens=input_tokens,
+                output_tokens=0,
+                estimated_cost_usd=0.0,
+                estimated_cost_saved_usd=0.0,
+                response_text=err_msg,
+                response=err_msg
+            ))
+        except Exception as write_err:
+            logger.error(f"❌ Failed to write error metrics: {write_err}")
+        return response, "local_fallback"
 
 @app.post("/route", response_model=QueryResponse, tags=["Routing"])
 @limiter.limit(RATE_LIMIT_REQUESTS)

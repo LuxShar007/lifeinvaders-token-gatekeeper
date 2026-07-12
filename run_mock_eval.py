@@ -242,18 +242,24 @@ async def evaluate_single_task(task: Dict[str, Any]) -> Dict[str, Any]:
                 if tokens_per_second == 0.0 and output_tokens > 0 and processing_time_ms > 0:
                     tokens_per_second = (output_tokens / (processing_time_ms / 1000))
                 
+                status_val = gateway_response.get("status") or "success"
+                resp_val = response_text[:200] + "..." if len(response_text) > 200 else response_text
                 result.update({
-                    "status": "success",
-                    "response_text": response_text[:200] + "..." if len(response_text) > 200 else response_text,
+                    "status": status_val,
+                    "response_text": resp_val,
+                    "response": resp_val,
                     "input_tokens": input_tokens,
                     "output_tokens": output_tokens,
                     "routed_via": routed_via,
+                    "route": routed_via,
+                    "active_route": routed_via,
+                    "routed_to": gateway_response.get("routed_to") or routed_via,
                     "processing_time_ms": round(processing_time_ms, 2),
                     "ttft_ms": round(ttft_ms, 2),
                     "tokens_per_second": round(tokens_per_second, 2),
                 })
                 
-                logger.info(f"✅ Task {task_id} complete [route={routed_via}, tokens_out={output_tokens}, status=success]")
+                logger.info(f"✅ Task {task_id} complete [route={routed_via}, tokens_out={output_tokens}, status={status_val}]")
             else:
                 result["status"] = "failure"
                 result["response_text"] = "Proxy gateway unavailable"
