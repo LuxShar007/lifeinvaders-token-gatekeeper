@@ -112,6 +112,12 @@ Env vars: `LOCAL_OLLAMA_URL` (default `http://localhost:11434`), `LOCAL_MODEL`
 `CODE_CONFIDENCE_THRESHOLD` (default `0.8`), `FIREWORKS_COST_PER_1K_TOKENS`
 (default `0.20`), `BENCHMARK_RANDOM_SEED` (default `42`).
 
+Known Limitations & Development Roadmap
+Ollama Runtime Sandbox Integration: The current local runtime dependencies and model weight structures are configured for external host layer communication. In closed sandboxes without a pre-installed Ollama background engine daemon, local loops will pause waiting for endpoint initialization.
+Quantization Optimizations: Future scaling paths include direct 4-bit tensor quantization mapping inside the deployment image layer to bypass external runtime dependencies.
+Keyword Dependency: The validation harness relies on explicit substring evaluation rather than loose semantic distance checking.
+
+
 ## Results — from an actual run
 
 Generated `2026-07-09T15:07:00Z`, committed at `benchmark/results.json`.
