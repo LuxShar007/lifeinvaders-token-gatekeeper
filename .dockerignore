@@ -1,3 +1,7 @@
+# =================================================================
+# LifeInvaders Gatekeeper Docker Build Context Optimizations
+# =================================================================
+
 # Block python environments and dependencies
 venv/
 .venv/

@@ -17,5 +17,5 @@ COPY . .
 VOLUME ["/input", "/output"]
 EXPOSE 8000
 
-# Boots the server, runs the evaluation, and keeps the server blocking/running indefinitely
-CMD ["/bin/bash", "-c", "python main.py & SERVER_PID=$!; for i in {1..10}; do if curl -s http://localhost:8000/ > /dev/null; then break; fi; sleep 1; done; python benchmark/harness.py; wait $SERVER_PID"]
+# Boots the server, runs the evaluation, and terminates cleanly to prevent automated timeouts
+CMD ["/bin/bash", "-c", "python main.py & SERVER_PID=$!; for i in {1..10}; do if curl -s http://localhost:8000/ > /dev/null; then break; fi; sleep 1; done; python benchmark/harness.py; kill -9 $SERVER_PID"]

@@ -63,14 +63,12 @@ async def strategy_gatekeeper_router(item: dict) -> dict:
 
 
 async def strategy_always_remote(item: dict) -> dict:
-    # Safely unpack the 3-element tuple returned by _call_and_time
     response, error, elapsed_s = await _call_and_time(
         router.call_remote_fireworks, item["id"], item["prompt"]
     )
     if error or not response:
         return evaluate_result(item, "error", "", 0, "error", error or "Remote failure", elapsed_s)
     
-    # Extract structural inner variables from the primary function payload
     res_text = response[0] or ""
     prompt_tok = response[1] or 0
     comp_tok = response[2] or 0
@@ -199,6 +197,28 @@ def main():
         json.dump(results, f, indent=2)
 
     print(f"Wrote {RESULTS_PATH}")
+
+    # REFORMAT HOOK FOR THE INTERCEPTED RESULTS ROUTE
+    try:
+        metrics_file = router.METRICS_OUTPUT_FILE
+        if metrics_file.exists():
+            with open(metrics_file, 'r') as f:
+                content = f.read().strip()
+            
+            if content and not content.startswith('['):
+                lines = content.split('\n')
+                valid_records = []
+                for line in lines:
+                    if line.strip():
+                        try:
+                            valid_records.append(json.loads(line))
+                        except Exception:
+                            pass
+                with open(metrics_file, 'w') as f:
+                    json.dump(valid_records, f, indent=2)
+                print(f"Cleaned up line-appended records into array formatting at {metrics_file}")
+    except Exception as e:
+        print(f"Telemetry formatting skipped: {e}")
 
 
 if __name__ == "__main__":

@@ -1,17 +1,24 @@
-.env
-__pycache__/
-*.pyc
-.venv/
+# =================================================================
+# LifeInvaders Gatekeeper Git Exclusion Architecture
+# =================================================================
+
+# Block python environments and dependencies
 venv/
-# Python bytecode caches
+.venv/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
+# Block local LLM models and weights
+models/
+*.gguf
+.ollama/
+
 # Local environment keys and variables
 .env
 *.local
+.gitignore
 
 # Archit's Output validation data 
 # (Keep your tasks file, but ignore your generated runtime output results)
